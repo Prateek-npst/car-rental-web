@@ -147,6 +147,123 @@ class AuthSecurityIntegrationTests {
 	}
 
 	@Test
+	void authenticatedAdminCanListVehicles() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+
+		HttpResponse<String> response = get("/vehicles", loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(200);
+		assertThat(response.body()).contains("TEST-101", "Test Compact")
+				.doesNotContain("password", "$2a$", "$2b$");
+	}
+
+	@Test
+	void adminCanCreateVehicle() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+		Map<String, Object> request = vehicleBody("NEW-202", "New Sedan", "85.50", "West End");
+
+		HttpResponse<String> response = post("/vehicles", request, loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(201);
+		assertThat(response.body()).contains("NEW-202", "New Sedan", "West End")
+				.doesNotContain("password", "$2a$", "$2b$");
+		assertThat(vehicleRepository.existsByRegNumber("NEW-202")).isTrue();
+	}
+
+	@Test
+	void userCannotCreateVehicle() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+
+		HttpResponse<String> response = post(
+				"/vehicles", vehicleBody("NEW-202", "New Sedan", "85.50", "West End"),
+				loginToken("renter@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(403);
+		assertThat(vehicleRepository.count()).isEqualTo(1);
+	}
+
+	@Test
+	void adminCanUpdateVehicle() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+
+		HttpResponse<String> response = put(
+				"/vehicles/" + vehicle.getId(),
+				vehicleBody("TEST-202", "Updated Sedan", "99.50", "North Harbor"),
+				loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(200);
+		assertThat(response.body()).contains("TEST-202", "Updated Sedan", "North Harbor");
+		assertThat(vehicleRepository.findById(vehicle.getId()).orElseThrow().getModel()).isEqualTo("Updated Sedan");
+	}
+
+	@Test
+	void userCannotUpdateVehicle() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+
+		HttpResponse<String> response = put(
+				"/vehicles/" + vehicle.getId(),
+				vehicleBody("TEST-202", "Updated Sedan", "99.50", "North Harbor"),
+				loginToken("renter@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(403);
+		assertThat(vehicleRepository.findById(vehicle.getId()).orElseThrow().getModel()).isEqualTo("Test Compact");
+	}
+
+	@Test
+	void adminCanDeleteVehicle() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+
+		HttpResponse<String> response = delete(
+				"/vehicles/" + vehicle.getId(), loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(204);
+		assertThat(vehicleRepository.findById(vehicle.getId())).isEmpty();
+	}
+
+	@Test
+	void userCannotDeleteVehicle() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+
+		HttpResponse<String> response = delete(
+				"/vehicles/" + vehicle.getId(), loginToken("renter@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(403);
+		assertThat(vehicleRepository.findById(vehicle.getId())).isPresent();
+	}
+
+	@Test
+	void vehicleUpdateAndDeleteReturnNotFoundWhenVehicleIsMissing() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+		String token = loginToken("admin@example.com", PASSWORD);
+
+		assertThat(put("/vehicles/999999", vehicleBody("NEW-202", "New Sedan", "85.50", "West End"), token)
+				.statusCode()).isEqualTo(404);
+		assertThat(delete("/vehicles/999999", token).statusCode()).isEqualTo(404);
+	}
+
+	@Test
+	void invalidVehicleDataIsRejected() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+		Map<String, Object> request = vehicleBody("NEW-202", "New Sedan", "100000.01", "West End");
+
+		assertThat(post("/vehicles", request, loginToken("admin@example.com", PASSWORD)).statusCode())
+				.isEqualTo(400);
+		assertThat(vehicleRepository.count()).isEqualTo(1);
+	}
+
+	@Test
+	void duplicateVehicleRegistrationNumberIsRejectedIgnoringCase() throws Exception {
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+
+		HttpResponse<String> response = post(
+				"/vehicles", vehicleBody("test-101", "Duplicate", "65.00", "Central City"),
+				loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(409);
+		assertThat(vehicleRepository.count()).isEqualTo(1);
+	}
+
+	@Test
 	void userAndAdminAuthoritiesAreEnforced() throws Exception {
 		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
 		String userToken = loginToken("renter@example.com", PASSWORD);
@@ -201,6 +318,112 @@ class AuthSecurityIntegrationTests {
 	@Test
 	void bookingRequiresAuthentication() throws Exception {
 		assertThat(post("/bookings", bookingBody()).statusCode()).isEqualTo(401);
+		assertThat(get("/bookings", null).statusCode()).isEqualTo(401);
+	}
+
+	@Test
+	void userReceivesOnlyTheirOwnBookingsWithSafeVehicleDetails() throws Exception {
+		User renter = saveUser("Renter", "renter@example.com", Role.USER);
+		User otherRenter = saveUser("Other Renter", "other@example.com", Role.USER);
+		bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		bookingRepository.save(new Booking(otherRenter, vehicle,
+				java.time.LocalDate.parse("2026-11-05"), java.time.LocalDate.parse("2026-11-07")));
+		String token = loginToken("renter@example.com", PASSWORD);
+
+		HttpResponse<String> response = get("/bookings", token);
+		JsonNode bookings = objectMapper.readTree(response.body());
+
+		assertThat(response.statusCode()).isEqualTo(200);
+		assertThat(bookings.size()).isEqualTo(1);
+		assertThat(bookings.get(0).get("userId").asLong()).isEqualTo(renter.getId());
+		assertThat(bookings.get(0).get("vehicle").get("model").asText()).isEqualTo("Test Compact");
+		assertThat(bookings.get(0).get("vehicle").get("location").asText()).isEqualTo("Central City");
+		assertThat(response.body()).doesNotContain("password", "$2a$", "$2b$");
+	}
+
+	@Test
+	void adminReceivesAllBookings() throws Exception {
+		User renter = saveUser("Renter", "renter@example.com", Role.USER);
+		User otherRenter = saveUser("Other Renter", "other@example.com", Role.USER);
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+		bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		bookingRepository.save(new Booking(otherRenter, vehicle,
+				java.time.LocalDate.parse("2026-11-05"), java.time.LocalDate.parse("2026-11-07")));
+
+		HttpResponse<String> response = get("/bookings", loginToken("admin@example.com", PASSWORD));
+
+		assertThat(response.statusCode()).isEqualTo(200);
+		assertThat(objectMapper.readTree(response.body()).size()).isEqualTo(2);
+	}
+
+	@Test
+	void userCanUpdateAndDeleteTheirOwnBooking() throws Exception {
+		User renter = saveUser("Renter", "renter@example.com", Role.USER);
+		Booking booking = bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> update = bookingBody();
+		update.put("startDate", "2026-11-05");
+		update.put("endDate", "2026-11-07");
+
+		HttpResponse<String> updated = put("/bookings/" + booking.getId(), update, token);
+		assertThat(updated.statusCode()).isEqualTo(200);
+		assertThat(objectMapper.readTree(updated.body()).get("startDate").asText()).isEqualTo("2026-11-05");
+
+		assertThat(delete("/bookings/" + booking.getId(), token).statusCode()).isEqualTo(204);
+		assertThat(bookingRepository.findById(booking.getId())).isEmpty();
+	}
+
+	@Test
+	void userCannotUpdateOrDeleteAnotherUsersBooking() throws Exception {
+		User owner = saveUser("Owner", "owner@example.com", Role.USER);
+		saveUser("Renter", "renter@example.com", Role.USER);
+		Booking booking = bookingRepository.save(new Booking(owner, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		String renterToken = loginToken("renter@example.com", PASSWORD);
+
+		assertThat(put("/bookings/" + booking.getId(), bookingBody(), renterToken).statusCode()).isEqualTo(403);
+		assertThat(delete("/bookings/" + booking.getId(), renterToken).statusCode()).isEqualTo(403);
+		assertThat(bookingRepository.findById(booking.getId())).isPresent();
+	}
+
+	@Test
+	void adminCanUpdateAndDeleteAnotherUsersBooking() throws Exception {
+		User owner = saveUser("Owner", "owner@example.com", Role.USER);
+		saveUser("Admin", "admin@example.com", Role.ADMIN);
+		Booking booking = bookingRepository.save(new Booking(owner, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		String adminToken = loginToken("admin@example.com", PASSWORD);
+		Map<String, Object> update = bookingBody();
+		update.put("startDate", "2026-11-05");
+		update.put("endDate", "2026-11-07");
+
+		assertThat(put("/bookings/" + booking.getId(), update, adminToken).statusCode()).isEqualTo(200);
+		assertThat(delete("/bookings/" + booking.getId(), adminToken).statusCode()).isEqualTo(204);
+		assertThat(bookingRepository.findById(booking.getId())).isEmpty();
+	}
+
+	@Test
+	void bookingUpdateRejectsInclusiveBoundaryConflictButAllowsTheNextDay() throws Exception {
+		User renter = saveUser("Renter", "renter@example.com", Role.USER);
+		User otherRenter = saveUser("Other Renter", "other@example.com", Role.USER);
+		Booking target = bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		bookingRepository.save(new Booking(otherRenter, vehicle,
+				java.time.LocalDate.parse("2026-11-04"), java.time.LocalDate.parse("2026-11-06")));
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> boundaryUpdate = bookingBody();
+		boundaryUpdate.put("startDate", "2026-11-06");
+		boundaryUpdate.put("endDate", "2026-11-08");
+
+		assertThat(put("/bookings/" + target.getId(), boundaryUpdate, token).statusCode()).isEqualTo(409);
+
+		Map<String, Object> followingDayUpdate = bookingBody();
+		followingDayUpdate.put("startDate", "2026-11-07");
+		followingDayUpdate.put("endDate", "2026-11-09");
+		assertThat(put("/bookings/" + target.getId(), followingDayUpdate, token).statusCode()).isEqualTo(200);
 	}
 
 	@Test
@@ -288,6 +511,23 @@ class AuthSecurityIntegrationTests {
 		return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
 	}
 
+	private HttpResponse<String> put(String path, Object body, String token) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder(URI.create(url(path)))
+				.header("Content-Type", "application/json")
+				.header("Authorization", "Bearer " + token)
+				.PUT(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)))
+				.build();
+		return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+	}
+
+	private HttpResponse<String> delete(String path, String token) throws Exception {
+		HttpRequest request = HttpRequest.newBuilder(URI.create(url(path)))
+				.header("Authorization", "Bearer " + token)
+				.DELETE()
+				.build();
+		return httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+	}
+
 	private String url(String path) {
 		return "http://localhost:" + port + API + path;
 	}
@@ -299,11 +539,23 @@ class AuthSecurityIntegrationTests {
 		return Map.of("name", name, "email", email, "password", password, "role", role);
 	}
 
+	private User saveUser(String name, String email, Role role) {
+		return userRepository.save(new User(name, email, passwordEncoder.encode(PASSWORD), role));
+	}
+
 	private Map<String, Object> bookingBody() {
 		return new HashMap<>(Map.of(
 				"vehicleId", vehicle.getId(),
 				"startDate", "2026-11-01",
 				"endDate", "2026-11-03"));
+	}
+
+	private Map<String, Object> vehicleBody(String regNumber, String model, String dailyRate, String location) {
+		return Map.of(
+				"regNumber", regNumber,
+				"model", model,
+				"dailyRate", dailyRate,
+				"location", location);
 	}
 
 	private String expiredToken(Long userId) {

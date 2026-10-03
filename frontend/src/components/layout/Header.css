@@ -26,3 +26,7 @@
 .header__link:hover {
   color: var(--color-primary);
 }
+
+.header__logout {
+  margin-left: var(--space-4);
+}

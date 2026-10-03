@@ -3,6 +3,12 @@
   gap: var(--space-4);
 }
 
+.booking-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
 .booking-form__confirmation {
   padding: var(--space-4);
   border-left: 3px solid var(--color-success);

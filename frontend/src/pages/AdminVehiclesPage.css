@@ -1,0 +1,53 @@
+.admin-vehicles-page {
+  display: grid;
+  gap: var(--space-6);
+  padding-block: var(--space-6);
+}
+
+.admin-vehicles-page__heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.admin-vehicles-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.admin-vehicles-page__list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-vehicles-page__details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.admin-vehicles-page__details > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: var(--space-3);
+}
+
+.admin-vehicles-page__details dt {
+  color: var(--color-text-muted);
+}
+
+.admin-vehicles-page__details dd {
+  margin: 0;
+}
+
+.admin-vehicles-page__form-actions,
+.admin-vehicles-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

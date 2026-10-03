@@ -14,13 +14,14 @@ function Button({
   isLoading = false,
   disabled = false,
   onClick,
+  className = '',
 }) {
   const isDisabled = disabled || isLoading;
 
   return (
     <button
       type={type}
-      className={`button button--${variant}`}
+      className={`button button--${variant} ${className}`.trim()}
       disabled={isDisabled}
       onClick={onClick}
     >
@@ -36,6 +37,7 @@ Button.propTypes = {
   isLoading: PropTypes.bool,
   disabled: PropTypes.bool,
   onClick: PropTypes.func,
+  className: PropTypes.string,
 };
 
 export default Button;

@@ -1,0 +1,44 @@
+.my-bookings-page {
+  display: grid;
+  gap: var(--space-6);
+  padding-block: var(--space-6);
+}
+
+.my-bookings-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.my-bookings-page__list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.my-bookings-page__details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.my-bookings-page__details > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: var(--space-3);
+}
+
+.my-bookings-page__details dt {
+  color: var(--color-text-muted);
+}
+
+.my-bookings-page__details dd {
+  margin: 0;
+}
+
+.my-bookings-page__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}

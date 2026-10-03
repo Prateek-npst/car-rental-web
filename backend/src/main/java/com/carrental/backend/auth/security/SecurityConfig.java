@@ -40,6 +40,10 @@ public class SecurityConfig {
 						.accessDeniedHandler(securityErrorHandler))
 				.authorizeHttpRequests(authorize -> authorize
 						.requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
+						.requestMatchers(HttpMethod.POST, "/vehicles").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/vehicles/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/vehicles/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/vehicles", "/vehicles/search").authenticated()
 						.anyRequest().authenticated())
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

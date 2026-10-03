@@ -29,4 +29,10 @@ export const FORM_FIELD_IDS = Object.freeze({
     DROPOFF_DATE: 'vehicle-search-dropoff-date',
     DROPOFF_DATE_ERROR: 'vehicle-search-dropoff-date-error',
   }),
+  VEHICLE_ADMIN: Object.freeze({
+    REG_NUMBER: 'admin-vehicle-reg-number',
+    MODEL: 'admin-vehicle-model',
+    DAILY_RATE: 'admin-vehicle-daily-rate',
+    LOCATION: 'admin-vehicle-location',
+  }),
 });

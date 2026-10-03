@@ -43,7 +43,14 @@ const bookingSchema = z
     },
   );
 
-function BookingForm({ onSubmit, isLoading, isComplete }) {
+function BookingForm({
+  onSubmit,
+  isLoading = false,
+  isComplete = false,
+  initialDates,
+  submitLabel = MESSAGES.BOOKING.SUBMIT,
+  onCancel,
+}) {
   const {
     register,
     handleSubmit,
@@ -51,8 +58,8 @@ function BookingForm({ onSubmit, isLoading, isComplete }) {
   } = useForm({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
-      startDate: '',
-      endDate: '',
+      startDate: initialDates?.startDate ?? '',
+      endDate: initialDates?.endDate ?? '',
     },
   });
   const startDateRegistration = register('startDate');
@@ -109,9 +116,21 @@ function BookingForm({ onSubmit, isLoading, isComplete }) {
         />
       </FormField>
 
-      <Button type="submit" disabled={isDisabled} isLoading={isLoading}>
-        {MESSAGES.BOOKING.SUBMIT}
-      </Button>
+      <div className="booking-form__actions">
+        <Button type="submit" disabled={isDisabled} isLoading={isLoading}>
+          {submitLabel}
+        </Button>
+        {onCancel && (
+          <Button
+            disabled={isDisabled}
+            onClick={onCancel}
+            type="button"
+            variant="secondary"
+          >
+            {MESSAGES.BOOKING.CANCEL_EDIT}
+          </Button>
+        )}
+      </div>
     </form>
   );
 }
@@ -120,11 +139,12 @@ BookingForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   isLoading: PropTypes.bool,
   isComplete: PropTypes.bool,
-};
-
-BookingForm.defaultProps = {
-  isLoading: false,
-  isComplete: false,
+  initialDates: PropTypes.shape({
+    startDate: PropTypes.string,
+    endDate: PropTypes.string,
+  }),
+  submitLabel: PropTypes.string,
+  onCancel: PropTypes.func,
 };
 
 export default BookingForm;

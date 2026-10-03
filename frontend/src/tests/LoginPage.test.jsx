@@ -13,12 +13,13 @@ vi.mock('@/context/AuthContext.jsx', () => ({
   useAuth: () => ({ login: mockLogin }),
 }));
 
-function renderLoginPage() {
+function renderLoginPage(initialEntry = ROUTES.LOGIN) {
   return render(
-    <MemoryRouter initialEntries={[ROUTES.LOGIN]}>
+    <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
         <Route path={ROUTES.VEHICLES} element={<h1>Vehicles destination</h1>} />
+        <Route path={ROUTES.BOOKINGS} element={<h1>Bookings destination</h1>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -96,6 +97,21 @@ describe('LoginPage', () => {
       email: 'renter@example.com',
       password: 'correct-horse-battery',
     });
+  });
+
+  it('returns to the protected destination after a successful login', async () => {
+    mockLogin.mockResolvedValue(undefined);
+    renderLoginPage({
+      pathname: ROUTES.LOGIN,
+      state: { from: { pathname: ROUTES.BOOKINGS } },
+    });
+    fillLoginForm('renter@example.com', 'correct-horse-battery');
+
+    fireEvent.click(screen.getByRole('button', { name: MESSAGES.AUTH.LOGIN }));
+
+    expect(
+      await screen.findByRole('heading', { name: 'Bookings destination' }),
+    ).toBeInTheDocument();
   });
 
   it('shows a friendly authentication error without exposing backend details', async () => {

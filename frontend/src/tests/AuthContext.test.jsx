@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from '@/context/AuthContext.jsx';
+import { ROLES } from '@/constants/roles.js';
 import * as authService from '@/services/authService.js';
 import {
   getAuthToken,
@@ -12,6 +13,21 @@ vi.mock('@/services/authService.js', () => ({
   login: vi.fn(),
   register: vi.fn(),
 }));
+
+function createToken(role = ROLES.USER, subject = '7') {
+  const payload = btoa(
+    JSON.stringify({
+      sub: subject,
+      role,
+      exp: Math.floor(Date.now() / 1000) + 3600,
+    }),
+  )
+    .replace(/=/g, '')
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_');
+
+  return `header.${payload}.signature`;
+}
 
 describe('AuthContext', () => {
   beforeEach(() => {
@@ -31,18 +47,21 @@ describe('AuthContext', () => {
     expect(result.current.token).toBeNull();
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
+    expect(result.current.isRestoring).toBe(false);
   });
 
   it('starts authenticated when a token is stored', () => {
-    setAuthToken('stored-token');
+    const token = createToken(ROLES.ADMIN);
+    setAuthToken(token);
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
     });
 
-    expect(result.current.token).toBe('stored-token');
+    expect(result.current.token).toBe(token);
     expect(result.current.isAuthenticated).toBe(true);
-    expect(result.current.user).toBeNull();
+    expect(result.current.user).toEqual({ id: 7, role: ROLES.ADMIN });
+    expect(result.current.isRestoring).toBe(false);
   });
 
   it('persists the login token and updates authentication state', async () => {
@@ -72,7 +91,7 @@ describe('AuthContext', () => {
   });
 
   it('clears the token and user when the app receives an expired-token event', () => {
-    setAuthToken('session-token');
+    setAuthToken(createToken());
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
@@ -89,7 +108,7 @@ describe('AuthContext', () => {
   });
 
   it('removes the token and clears authentication state on logout', () => {
-    setAuthToken('session-token');
+    setAuthToken(createToken());
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,

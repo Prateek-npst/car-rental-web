@@ -10,10 +10,11 @@ export const API_CONFIG = Object.freeze({
     REGISTER: '/auth/register',
   }),
   VEHICLES: Object.freeze({
+    BASE: '/vehicles',
     SEARCH: '/vehicles/search',
   }),
   BOOKINGS: Object.freeze({
-    CREATE: '/bookings',
+    BASE: '/bookings',
   }),
 });
 

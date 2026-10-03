@@ -14,6 +14,9 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.DecimalMax;
+import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Digits;
 
 @Entity
 @Table(name = "vehicles")
@@ -34,6 +37,9 @@ public class Vehicle {
 
 	@NotNull
 	@Positive
+	@DecimalMin(ValidationLimits.VEHICLE_DAILY_RATE_MIN)
+	@DecimalMax(ValidationLimits.VEHICLE_DAILY_RATE_MAX)
+	@Digits(integer = ValidationLimits.VEHICLE_DAILY_RATE_INTEGER_DIGITS, fraction = ValidationLimits.VEHICLE_DAILY_RATE_FRACTION_DIGITS)
 	@Column(nullable = false)
 	private BigDecimal dailyRate;
 

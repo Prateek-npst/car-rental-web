@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import * as authService from '@/services/authService.js';
 import { MESSAGES } from '@/constants/messages.js';
+import { ROLES } from '@/constants/roles.js';
 import {
   getAuthToken,
   removeAuthToken,
@@ -10,15 +11,61 @@ import {
 
 const AuthContext = createContext(null);
 
+function getUserFromToken(token) {
+  try {
+    const encodedPayload = token.split('.')[1];
+
+    if (!encodedPayload) {
+      return null;
+    }
+
+    const base64Payload = encodedPayload
+      .replace(/-/g, '+')
+      .replace(/_/g, '/')
+      .padEnd(Math.ceil(encodedPayload.length / 4) * 4, '=');
+    const claims = JSON.parse(window.atob(base64Payload));
+    const id = Number(claims.sub);
+    const expiration = Number(claims.exp);
+
+    if (
+      !Number.isSafeInteger(id) ||
+      id < 1 ||
+      !Number.isFinite(expiration) ||
+      expiration <= Date.now() / 1000 ||
+      !Object.values(ROLES).includes(claims.role)
+    ) {
+      return null;
+    }
+
+    return { id, role: claims.role };
+  } catch {
+    return null;
+  }
+}
+
+function getInitialAuthState() {
+  const storedToken = getAuthToken();
+  const user = storedToken ? getUserFromToken(storedToken) : null;
+
+  if (storedToken && !user) {
+    removeAuthToken();
+  }
+
+  return {
+    token: user ? storedToken : null,
+    user,
+    isRestoring: false,
+  };
+}
+
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(() => getAuthToken());
-  const [user, setUser] = useState(null);
+  const [authState, setAuthState] = useState(getInitialAuthState);
+  const { token } = authState;
 
   useEffect(() => {
     const handleTokenExpired = () => {
-      setToken(null);
-      setUser(null);
       removeAuthToken();
+      setAuthState({ token: null, user: null, isRestoring: false });
     };
 
     window.addEventListener('auth:token-expired', handleTokenExpired);
@@ -38,16 +85,18 @@ export function AuthProvider({ children }) {
     }
 
     setAuthToken(authToken);
-    setToken(authToken);
-    setUser(authUser);
+    setAuthState({
+      token: authToken,
+      user: authUser,
+      isRestoring: false,
+    });
 
     return response;
   }
 
   function logout() {
     removeAuthToken();
-    setToken(null);
-    setUser(null);
+    setAuthState({ token: null, user: null, isRestoring: false });
   }
 
   function register(registrationData) {
@@ -55,8 +104,7 @@ export function AuthProvider({ children }) {
   }
 
   const value = {
-    user,
-    token,
+    ...authState,
     isAuthenticated: Boolean(token),
     login,
     logout,

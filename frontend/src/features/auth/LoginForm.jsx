@@ -11,7 +11,7 @@ import { LIMITS } from '@/constants/limits.js';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import { useAuth } from '@/context/AuthContext.jsx';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import './LoginForm.css';
 
 const loginSchema = z.object({
@@ -30,6 +30,7 @@ const loginSchema = z.object({
 
 function LoginForm() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
   const [authError, setAuthError] = useState('');
   const {
@@ -49,7 +50,7 @@ function LoginForm() {
   async function submitLogin(credentials) {
     try {
       await login(credentials);
-      navigate(ROUTES.VEHICLES);
+      navigate(location.state?.from || ROUTES.VEHICLES, { replace: true });
     } catch {
       setAuthError(MESSAGES.AUTH.INVALID_CREDENTIALS);
     }

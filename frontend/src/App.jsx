@@ -1,36 +1,56 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout.jsx';
+import AdminVehiclesPage from '@/pages/AdminVehiclesPage.jsx';
 import CreateBookingPage from '@/pages/CreateBookingPage.jsx';
+import MyBookingsPage from '@/pages/MyBookingsPage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
 import RegistrationPage from '@/pages/RegistrationPage.jsx';
 import VehiclesPage from '@/pages/VehiclesPage.jsx';
 import { ROUTES } from '@/constants/routes.js';
-
-function PlaceholderPage({ title }) {
-  return <h1>{title}</h1>;
-}
+import { ROLES } from '@/constants/roles.js';
+import ProtectedRoute from '@/components/routing/ProtectedRoute.jsx';
+import RoleRoute from '@/components/routing/RoleRoute.jsx';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route element={<AppLayout />}>
-          <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-          <Route path={ROUTES.REGISTER} element={<RegistrationPage />} />
+          <Route element={<ProtectedRoute guestOnly />}>
+            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+            <Route path={ROUTES.REGISTER} element={<RegistrationPage />} />
+          </Route>
 
-          <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
 
-          <Route
-            path={ROUTES.BOOKINGS}
-            element={<PlaceholderPage title="My Bookings" />}
-          />
+            <Route
+              path={ROUTES.BOOKINGS}
+              element={<MyBookingsPage />}
+            />
 
-          <Route path={ROUTES.CREATE_BOOKING} element={<CreateBookingPage />} />
+            <Route
+              path={ROUTES.CREATE_BOOKING}
+              element={<CreateBookingPage />}
+            />
 
-          <Route
-            path={ROUTES.ADMIN_VEHICLE_CREATE}
-            element={<PlaceholderPage title="Create Vehicle" />}
-          />
+            <Route
+              path={ROUTES.ADMIN_VEHICLES}
+              element={
+                <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                  <AdminVehiclesPage />
+                </RoleRoute>
+              }
+            />
+            <Route
+              path={ROUTES.ADMIN_VEHICLE_CREATE}
+              element={
+                <RoleRoute allowedRoles={[ROLES.ADMIN]}>
+                  <Navigate to={ROUTES.ADMIN_VEHICLES} replace />
+                </RoleRoute>
+              }
+            />
+          </Route>
 
           <Route path="*" element={<Navigate to={ROUTES.VEHICLES} replace />} />
         </Route>
