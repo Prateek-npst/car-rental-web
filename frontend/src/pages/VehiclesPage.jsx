@@ -4,18 +4,30 @@ import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import VehicleCard from '@/features/vehicles/VehicleCard.jsx';
 import VehicleSearchForm from '@/features/vehicles/VehicleSearchForm.jsx';
-import { searchMockVehicles } from '@/features/vehicles/vehicleMockData.js';
+import { searchAvailableVehicles } from '@/services/vehicleService.js';
 import './VehiclesPage.css';
 
 function VehiclesPage() {
   const navigate = useNavigate();
   const [searchCriteria, setSearchCriteria] = useState(null);
-  const availableVehicles = searchCriteria
-    ? searchMockVehicles(searchCriteria)
-    : [];
+  const [availableVehicles, setAvailableVehicles] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
 
-  function handleSearch(criteria) {
+  async function handleSearch(criteria) {
     setSearchCriteria(criteria);
+    setAvailableVehicles([]);
+    setSearchError('');
+    setIsLoading(true);
+
+    try {
+      const vehicles = await searchAvailableVehicles(criteria);
+      setAvailableVehicles(vehicles);
+    } catch {
+      setSearchError(MESSAGES.VEHICLES.SEARCH_FAILED);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   function handleSelectVehicle(vehicle) {
@@ -62,7 +74,11 @@ function VehiclesPage() {
           <h2 id="vehicles-results-title">
             {MESSAGES.VEHICLES.AVAILABLE_VEHICLES}
           </h2>
-          {availableVehicles.length > 0 ? (
+          {isLoading ? (
+            <p role="status">{MESSAGES.COMMON.LOADING}</p>
+          ) : searchError ? (
+            <p role="alert">{searchError}</p>
+          ) : availableVehicles.length > 0 ? (
             <ul className="vehicles-page__list">
               {availableVehicles.map((vehicle) => (
                 <VehicleCard

@@ -32,7 +32,7 @@ function VehicleCard({ vehicle, onSelect }) {
 
 VehicleCard.propTypes = {
   vehicle: PropTypes.shape({
-    id: PropTypes.string.isRequired,
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
     regNumber: PropTypes.string.isRequired,
     model: PropTypes.string.isRequired,
     dailyRate: PropTypes.number.isRequired,

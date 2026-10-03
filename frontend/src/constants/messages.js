@@ -38,6 +38,7 @@ export const MESSAGES = Object.freeze({
     DROPOFF_DATE_AFTER_PICKUP: 'Drop-off date must be after pickup date.',
     AVAILABLE_VEHICLES: 'Available vehicles',
     NO_AVAILABLE_VEHICLES: 'No available vehicles match this search.',
+    SEARCH_FAILED: 'Unable to search vehicles right now. Please try again.',
     MODEL_LABEL: 'Model',
     REG_NUMBER_LABEL: 'Registration number',
     DAILY_RATE_LABEL: 'Daily rate',

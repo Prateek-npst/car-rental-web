@@ -9,6 +9,9 @@ export const API_CONFIG = Object.freeze({
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
   }),
+  VEHICLES: Object.freeze({
+    SEARCH: '/vehicles/search',
+  }),
 });
 
 export const apiClient = axios.create({

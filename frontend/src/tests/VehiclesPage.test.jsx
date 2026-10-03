@@ -1,10 +1,23 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
-import { describe, expect, it } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import CreateBookingPage from '@/pages/CreateBookingPage.jsx';
 import VehiclesPage from '@/pages/VehiclesPage.jsx';
+import { searchAvailableVehicles } from '@/services/vehicleService.js';
+
+vi.mock('@/services/vehicleService.js', () => ({
+  searchAvailableVehicles: vi.fn(),
+}));
+
+const backendVehicle = {
+  id: 42,
+  regNumber: 'API-042',
+  model: 'Backend Sedan',
+  dailyRate: 87.5,
+  location: 'Central City',
+};
 
 function renderVehiclesPage() {
   return render(
@@ -31,6 +44,10 @@ function fillSearchForm({ location, pickupDate, dropoffDate }) {
 }
 
 describe('VehiclesPage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('renders the location and date search fields', () => {
     renderVehiclesPage();
 
@@ -87,7 +104,8 @@ describe('VehiclesPage', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('shows matching available vehicles and the submitted criteria', async () => {
+  it('displays backend vehicles and the submitted criteria', async () => {
+    searchAvailableVehicles.mockResolvedValue([backendVehicle]);
     renderVehiclesPage();
     fillSearchForm({
       location: 'Central City',
@@ -108,7 +126,7 @@ describe('VehiclesPage', () => {
     expect(screen.getByText('2026-10-10')).toBeInTheDocument();
     expect(screen.getByText('2026-10-12')).toBeInTheDocument();
     expect(
-      screen.getByRole('heading', { name: 'City Sedan' }),
+      screen.getByRole('heading', { name: 'Backend Sedan' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('heading', { name: 'City Compact' }),
@@ -116,48 +134,46 @@ describe('VehiclesPage', () => {
     expect(
       screen.queryByRole('heading', { name: 'Trail SUV' }),
     ).not.toBeInTheDocument();
-    expect(screen.getByText('CC-202')).toBeInTheDocument();
-    expect(screen.getByText('85')).toBeInTheDocument();
+    expect(screen.getByText('API-042')).toBeInTheDocument();
+    expect(screen.getByText('87.5')).toBeInTheDocument();
+    expect(searchAvailableVehicles).toHaveBeenCalledWith({
+      location: 'Central City',
+      pickupDate: '2026-10-10',
+      dropoffDate: '2026-10-12',
+    });
   });
 
-  it('treats a booking drop-off date as occupied', async () => {
+  it('shows a loading state while the API request is pending', async () => {
+    let resolveSearch;
+    searchAvailableVehicles.mockReturnValue(
+      new Promise((resolve) => {
+        resolveSearch = resolve;
+      }),
+    );
     renderVehiclesPage();
     fillSearchForm({
       location: 'Central City',
-      pickupDate: '2026-10-15',
-      dropoffDate: '2026-10-16',
+      pickupDate: '2026-10-10',
+      dropoffDate: '2026-10-12',
     });
 
     fireEvent.click(
       screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
     );
 
+    expect(await screen.findByText(MESSAGES.COMMON.LOADING)).toBeVisible();
     expect(
-      await screen.findByRole('heading', { name: 'City Sedan' }),
-    ).toBeInTheDocument();
+      screen.getByRole('button', { name: MESSAGES.COMMON.LOADING }),
+    ).toBeDisabled();
+
+    resolveSearch([backendVehicle]);
     expect(
-      screen.queryByRole('heading', { name: 'City Compact' }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps a vehicle available when the search starts the day after a booking', async () => {
-    renderVehiclesPage();
-    fillSearchForm({
-      location: 'Central City',
-      pickupDate: '2026-10-16',
-      dropoffDate: '2026-10-17',
-    });
-
-    fireEvent.click(
-      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
-    );
-
-    expect(
-      await screen.findByRole('heading', { name: 'City Compact' }),
+      await screen.findByRole('heading', { name: 'Backend Sedan' }),
     ).toBeInTheDocument();
   });
 
   it('displays an empty state when no available vehicles match', async () => {
+    searchAvailableVehicles.mockResolvedValue([]);
     renderVehiclesPage();
     fillSearchForm({
       location: 'West End',
@@ -174,7 +190,47 @@ describe('VehiclesPage', () => {
     ).toBeInTheDocument();
   });
 
+  it('displays a safe error when the API request fails', async () => {
+    searchAvailableVehicles.mockRejectedValue(
+      new Error('Internal database details'),
+    );
+    renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: '2026-10-10',
+      dropoffDate: '2026-10-12',
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
+    );
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      MESSAGES.VEHICLES.SEARCH_FAILED,
+    );
+    expect(screen.queryByText('Internal database details')).toBeNull();
+  });
+
+  it('does not call the API when form values are invalid', async () => {
+    renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: '2026-10-12',
+      dropoffDate: '2026-10-12',
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
+    );
+
+    expect(
+      await screen.findByText(MESSAGES.VEHICLES.DROPOFF_DATE_AFTER_PICKUP),
+    ).toBeVisible();
+    expect(searchAvailableVehicles).not.toHaveBeenCalled();
+  });
+
   it('opens booking creation with the selected vehicle', async () => {
+    searchAvailableVehicles.mockResolvedValue([backendVehicle]);
     renderVehiclesPage();
     fillSearchForm({
       location: 'Central City',
@@ -187,7 +243,7 @@ describe('VehiclesPage', () => {
     );
 
     const vehicleTitle = await screen.findByRole('heading', {
-      name: 'City Compact',
+      name: 'Backend Sedan',
     });
     fireEvent.click(
       within(vehicleTitle.closest('article')).getByRole('button', {
@@ -200,7 +256,7 @@ describe('VehiclesPage', () => {
         name: MESSAGES.BOOKING.VEHICLE_DETAILS,
       }),
     ).toBeInTheDocument();
-    expect(screen.getByText('City Compact')).toBeInTheDocument();
-    expect(screen.getByText('CC-101')).toBeInTheDocument();
+    expect(screen.getByText('Backend Sedan')).toBeInTheDocument();
+    expect(screen.getByText('API-042')).toBeInTheDocument();
   });
 });
