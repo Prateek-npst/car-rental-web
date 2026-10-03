@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
 import * as authService from '@/services/authService.js';
 import { MESSAGES } from '@/constants/messages.js';
@@ -14,9 +14,24 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => getAuthToken());
   const [user, setUser] = useState(null);
 
+  useEffect(() => {
+    const handleTokenExpired = () => {
+      setToken(null);
+      setUser(null);
+      removeAuthToken();
+    };
+
+    window.addEventListener('auth:token-expired', handleTokenExpired);
+
+    return () => {
+      window.removeEventListener('auth:token-expired', handleTokenExpired);
+    };
+  }, []);
+
   async function login(credentials) {
     const response = await authService.login(credentials);
     const authToken = response?.token;
+    const authUser = response?.user ?? null;
 
     if (!authToken) {
       throw new Error(MESSAGES.COMMON.SERVER_ERROR);
@@ -24,7 +39,7 @@ export function AuthProvider({ children }) {
 
     setAuthToken(authToken);
     setToken(authToken);
-    setUser(null);
+    setUser(authUser);
 
     return response;
   }

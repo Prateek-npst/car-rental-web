@@ -47,7 +47,14 @@ describe('AuthContext', () => {
 
   it('persists the login token and updates authentication state', async () => {
     const credentials = { email: 'renter@example.com', password: 'secret' };
-    authService.login.mockResolvedValue({ token: 'session-token' });
+    const user = {
+      id: 1,
+      name: 'Renter',
+      email: 'renter@example.com',
+      role: 'USER',
+    };
+
+    authService.login.mockResolvedValue({ token: 'session-token', user });
 
     const { result } = renderHook(() => useAuth(), {
       wrapper: AuthProvider,
@@ -59,8 +66,26 @@ describe('AuthContext', () => {
 
     expect(authService.login).toHaveBeenCalledWith(credentials);
     expect(result.current.token).toBe('session-token');
+    expect(result.current.user).toEqual(user);
     expect(result.current.isAuthenticated).toBe(true);
     expect(getAuthToken()).toBe('session-token');
+  });
+
+  it('clears the token and user when the app receives an expired-token event', () => {
+    setAuthToken('session-token');
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    act(() => {
+      window.dispatchEvent(new Event('auth:token-expired'));
+    });
+
+    expect(result.current.token).toBeNull();
+    expect(result.current.user).toBeNull();
+    expect(result.current.isAuthenticated).toBe(false);
+    expect(getAuthToken()).toBeNull();
   });
 
   it('removes the token and clears authentication state on logout', () => {

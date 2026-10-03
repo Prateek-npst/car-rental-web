@@ -1,27 +1,36 @@
-import { API_CONFIG } from '@/config/api.js';
+import { API_CONFIG, apiClient } from '@/config/api.js';
 import { MESSAGES } from '@/constants/messages.js';
 
-async function post(endpoint, data) {
-  const baseUrl = API_CONFIG.BASE_URL.replace(/\/+$/, '');
-  const response = await fetch(`${baseUrl}${endpoint}`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
+export async function login(credentials) {
+  try {
+    const response = await apiClient.post(API_CONFIG.AUTH.LOGIN, credentials);
 
-  if (!response.ok) {
-    throw new Error(MESSAGES.COMMON.SERVER_ERROR);
+    return response.data;
+  } catch (error) {
+    if (error?.response?.status === 401) {
+      throw new Error(MESSAGES.AUTH.INVALID_CREDENTIALS, { cause: error });
+    }
+
+    throw new Error(MESSAGES.COMMON.SERVER_ERROR, { cause: error });
   }
-
-  return response.json();
 }
 
-export function login(credentials) {
-  return post(API_CONFIG.AUTH.LOGIN, credentials);
-}
+export async function register(registrationData) {
+  try {
+    const response = await apiClient.post(
+      API_CONFIG.AUTH.REGISTER,
+      registrationData,
+    );
 
-export function register(registrationData) {
-  return post(API_CONFIG.AUTH.REGISTER, registrationData);
+    return response.data;
+  } catch (error) {
+    if (
+      [400, 409, 422].includes(error?.response?.status) ||
+      error?.response?.status === 500
+    ) {
+      throw new Error(MESSAGES.AUTH.REGISTRATION_FAILED, { cause: error });
+    }
+
+    throw new Error(MESSAGES.AUTH.REGISTRATION_FAILED, { cause: error });
+  }
 }

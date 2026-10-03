@@ -1,60 +1,67 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { API_CONFIG } from '@/config/api.js';
 import { MESSAGES } from '@/constants/messages.js';
 import { login, register } from '@/services/authService.js';
+import { API_CONFIG, apiClient } from '@/config/api.js';
+
+vi.mock('@/config/api.js', () => ({
+  API_CONFIG: {
+    BASE_URL: 'http://localhost:8081/api',
+    AUTH: {
+      LOGIN: '/auth/login',
+      REGISTER: '/auth/register',
+    },
+  },
+  apiClient: {
+    post: vi.fn(),
+  },
+}));
 
 describe('authService', () => {
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn());
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.clearAllMocks();
   });
 
-  it('sends login credentials to the configured login endpoint', async () => {
+  it('sends login credentials to the configured login endpoint via axios', async () => {
     const credentials = { email: 'renter@example.com', password: 'secret' };
-    const apiResponse = {};
-    fetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(apiResponse),
-    });
+    const apiResponse = { token: 'jwt-token', user: { id: 1 } };
+    apiClient.post.mockResolvedValue({ data: apiResponse });
 
     await expect(login(credentials)).resolves.toBe(apiResponse);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${API_CONFIG.BASE_URL.replace(/\/+$/, '')}${API_CONFIG.AUTH.LOGIN}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(credentials),
-      },
+    expect(apiClient.post).toHaveBeenCalledWith(
+      API_CONFIG.AUTH.LOGIN,
+      credentials,
     );
   });
 
-  it('sends registration data to the configured registration endpoint', async () => {
+  it('sends registration data to the configured registration endpoint via axios', async () => {
     const registrationData = { email: 'renter@example.com' };
-    const apiResponse = {};
-    fetch.mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue(apiResponse),
-    });
+    const apiResponse = { id: 1, email: 'renter@example.com' };
+    apiClient.post.mockResolvedValue({ data: apiResponse });
 
     await expect(register(registrationData)).resolves.toBe(apiResponse);
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${API_CONFIG.BASE_URL.replace(/\/+$/, '')}${API_CONFIG.AUTH.REGISTER}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(registrationData),
-      },
+    expect(apiClient.post).toHaveBeenCalledWith(
+      API_CONFIG.AUTH.REGISTER,
+      registrationData,
     );
   });
 
-  it('uses the shared server error message for HTTP failures', async () => {
-    fetch.mockResolvedValue({ ok: false });
+  it('uses the generic invalid credentials message for 401 login failures', async () => {
+    apiClient.post.mockRejectedValue({ response: { status: 401 } });
 
-    await expect(login({})).rejects.toThrow(MESSAGES.COMMON.SERVER_ERROR);
+    await expect(login({})).rejects.toThrow(MESSAGES.AUTH.INVALID_CREDENTIALS);
+  });
+
+  it('uses the safe registration failure message for registration errors', async () => {
+    apiClient.post.mockRejectedValue({ response: { status: 409 } });
+
+    await expect(register({})).rejects.toThrow(
+      MESSAGES.AUTH.REGISTRATION_FAILED,
+    );
   });
 });
