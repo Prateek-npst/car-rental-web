@@ -1,0 +1,15 @@
+.login-page {
+  width: min(100%, 28rem);
+  margin: var(--space-8) auto;
+}
+
+.login-page__register {
+  margin: 0;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+.login-page__register a {
+  color: var(--color-primary);
+  font-weight: 600;
+}

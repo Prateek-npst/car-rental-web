@@ -1,0 +1,12 @@
+.vehicle-search-form {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  align-items: start;
+  gap: var(--space-4);
+}
+
+@media (max-width: 48rem) {
+  .vehicle-search-form {
+    grid-template-columns: 1fr;
+  }
+}

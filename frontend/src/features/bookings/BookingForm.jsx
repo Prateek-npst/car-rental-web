@@ -1,0 +1,141 @@
+import { useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import Button from '@/components/ui/Button.jsx';
+import FormField from '@/components/ui/FormField.jsx';
+import TextInput from '@/components/ui/TextInput.jsx';
+import { FORM_FIELD_IDS } from '@/constants/formFieldIds.js';
+import { LIMITS } from '@/constants/limits.js';
+import { MESSAGES } from '@/constants/messages.js';
+import './BookingForm.css';
+
+function meetsMinimumDuration(startDate, endDate) {
+  const earliestEndDate = new Date(`${startDate}T00:00:00Z`);
+  earliestEndDate.setUTCDate(
+    earliestEndDate.getUTCDate() + LIMITS.BOOKING.MIN_RENTAL_DAYS,
+  );
+
+  return endDate >= earliestEndDate.toISOString().slice(0, 10);
+}
+
+const bookingSchema = z
+  .object({
+    startDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
+    endDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
+  })
+  .refine(
+    ({ startDate, endDate }) => !startDate || !endDate || endDate > startDate,
+    {
+      message: MESSAGES.BOOKING.DATE_AFTER_START,
+      path: ['endDate'],
+    },
+  )
+  .refine(
+    ({ startDate, endDate }) =>
+      !startDate ||
+      !endDate ||
+      endDate <= startDate ||
+      meetsMinimumDuration(startDate, endDate),
+    {
+      message: MESSAGES.BOOKING.MIN_RENTAL_DURATION,
+      path: ['endDate'],
+    },
+  );
+
+function BookingForm() {
+  const [submittedDates, setSubmittedDates] = useState(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: {
+      startDate: '',
+      endDate: '',
+    },
+  });
+  const startDateRegistration = register('startDate');
+  const endDateRegistration = register('endDate');
+
+  function submitBookingDetails(dates) {
+    setSubmittedDates(dates);
+  }
+
+  return (
+    <form
+      className="booking-form"
+      noValidate
+      onSubmit={handleSubmit(submitBookingDetails)}
+    >
+      <FormField
+        error={errors.startDate?.message}
+        htmlFor={FORM_FIELD_IDS.BOOKING_CREATE.START_DATE}
+        label={MESSAGES.BOOKING.START_DATE_LABEL}
+      >
+        <TextInput
+          {...startDateRegistration}
+          aria-describedby={
+            errors.startDate
+              ? FORM_FIELD_IDS.BOOKING_CREATE.START_DATE_ERROR
+              : undefined
+          }
+          aria-invalid={Boolean(errors.startDate)}
+          disabled={isSubmitting}
+          id={FORM_FIELD_IDS.BOOKING_CREATE.START_DATE}
+          onChange={(event) => {
+            startDateRegistration.onChange(event);
+            setSubmittedDates(null);
+          }}
+          type="date"
+        />
+      </FormField>
+
+      <FormField
+        error={errors.endDate?.message}
+        htmlFor={FORM_FIELD_IDS.BOOKING_CREATE.END_DATE}
+        label={MESSAGES.BOOKING.END_DATE_LABEL}
+      >
+        <TextInput
+          {...endDateRegistration}
+          aria-describedby={
+            errors.endDate
+              ? FORM_FIELD_IDS.BOOKING_CREATE.END_DATE_ERROR
+              : undefined
+          }
+          aria-invalid={Boolean(errors.endDate)}
+          disabled={isSubmitting}
+          id={FORM_FIELD_IDS.BOOKING_CREATE.END_DATE}
+          onChange={(event) => {
+            endDateRegistration.onChange(event);
+            setSubmittedDates(null);
+          }}
+          type="date"
+        />
+      </FormField>
+
+      <Button type="submit" isLoading={isSubmitting}>
+        {MESSAGES.BOOKING.SUBMIT}
+      </Button>
+
+      {submittedDates && (
+        <section className="booking-form__confirmation" role="status">
+          <p>{MESSAGES.BOOKING.READY_TO_SUBMIT}</p>
+          <dl>
+            <div>
+              <dt>{MESSAGES.BOOKING.START_DATE_LABEL}</dt>
+              <dd>{submittedDates.startDate}</dd>
+            </div>
+            <div>
+              <dt>{MESSAGES.BOOKING.END_DATE_LABEL}</dt>
+              <dd>{submittedDates.endDate}</dd>
+            </div>
+          </dl>
+        </section>
+      )}
+    </form>
+  );
+}
+
+export default BookingForm;

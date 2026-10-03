@@ -1,0 +1,30 @@
+.create-booking-page {
+  display: grid;
+  gap: var(--space-5);
+  padding-block: var(--space-6);
+}
+
+.create-booking-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.create-booking-page__vehicle-details {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.create-booking-page__vehicle-details > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: var(--space-3);
+}
+
+.create-booking-page__vehicle-details dt {
+  color: var(--color-text-muted);
+}
+
+.create-booking-page__vehicle-details dd {
+  margin: 0;
+}

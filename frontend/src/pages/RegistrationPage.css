@@ -1,0 +1,14 @@
+.registration-page {
+  width: min(100%, 30rem);
+  margin: var(--space-8) auto;
+}
+
+.registration-page__login {
+  margin: 0;
+  text-align: center;
+}
+
+.registration-page__login a {
+  color: var(--color-primary);
+  font-weight: 600;
+}

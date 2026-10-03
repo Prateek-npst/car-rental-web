@@ -1,0 +1,49 @@
+.vehicles-page {
+  display: grid;
+  gap: var(--space-6);
+  padding-block: var(--space-6);
+}
+
+.vehicles-page__title {
+  margin: 0;
+  font-size: var(--font-size-2xl);
+}
+
+.vehicles-page__criteria h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-lg);
+}
+
+.vehicles-page__criteria dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+}
+
+.vehicles-page__criteria dl > div {
+  display: grid;
+  grid-template-columns: minmax(8rem, 12rem) 1fr;
+  gap: var(--space-3);
+}
+
+.vehicles-page__criteria dt {
+  color: var(--color-text-muted);
+}
+
+.vehicles-page__criteria dd {
+  margin: 0;
+}
+
+.vehicles-page__results h2 {
+  margin: 0 0 var(--space-4);
+  font-size: var(--font-size-lg);
+}
+
+.vehicles-page__list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
