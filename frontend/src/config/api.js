@@ -12,6 +12,9 @@ export const API_CONFIG = Object.freeze({
   VEHICLES: Object.freeze({
     SEARCH: '/vehicles/search',
   }),
+  BOOKINGS: Object.freeze({
+    CREATE: '/bookings',
+  }),
 });
 
 export const apiClient = axios.create({

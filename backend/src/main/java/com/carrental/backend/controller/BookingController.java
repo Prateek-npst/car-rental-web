@@ -42,13 +42,10 @@ public class BookingController {
 	public ResponseEntity<BookingResponse> createBooking(
 			@AuthenticationPrincipal AuthenticatedUser authenticatedUser,
 			@Valid @RequestBody BookingRequest request) {
-		if (!authenticatedUser.userId().equals(request.userId())) {
-			throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Booking owner must match the authenticated user.");
-		}
 		User user = userRepository.findById(authenticatedUser.userId())
 				.orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid authentication."));
 		Vehicle vehicle = vehicleRepository.findById(request.vehicleId)
-				.orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Vehicle not found."));
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehicle not found."));
 
 		if (!request.endDate().isAfter(request.startDate())) {
 			throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "The end date must be after the start date.");
@@ -69,7 +66,6 @@ public class BookingController {
 	}
 
 	public record BookingRequest(
-			@NotNull Long userId,
 			@NotNull Long vehicleId,
 			@NotNull LocalDate startDate,
 			@NotNull LocalDate endDate) {

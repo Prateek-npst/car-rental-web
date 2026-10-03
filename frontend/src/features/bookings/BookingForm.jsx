@@ -1,6 +1,6 @@
-import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
+import PropTypes from 'prop-types';
 import { z } from 'zod';
 import Button from '@/components/ui/Button.jsx';
 import FormField from '@/components/ui/FormField.jsx';
@@ -43,8 +43,7 @@ const bookingSchema = z
     },
   );
 
-function BookingForm() {
-  const [submittedDates, setSubmittedDates] = useState(null);
+function BookingForm({ onSubmit, isLoading, isComplete }) {
   const {
     register,
     handleSubmit,
@@ -58,16 +57,13 @@ function BookingForm() {
   });
   const startDateRegistration = register('startDate');
   const endDateRegistration = register('endDate');
-
-  function submitBookingDetails(dates) {
-    setSubmittedDates(dates);
-  }
+  const isDisabled = isLoading || isSubmitting || isComplete;
 
   return (
     <form
       className="booking-form"
       noValidate
-      onSubmit={handleSubmit(submitBookingDetails)}
+      onSubmit={handleSubmit(onSubmit)}
     >
       <FormField
         error={errors.startDate?.message}
@@ -82,11 +78,10 @@ function BookingForm() {
               : undefined
           }
           aria-invalid={Boolean(errors.startDate)}
-          disabled={isSubmitting}
+          disabled={isDisabled}
           id={FORM_FIELD_IDS.BOOKING_CREATE.START_DATE}
           onChange={(event) => {
             startDateRegistration.onChange(event);
-            setSubmittedDates(null);
           }}
           type="date"
         />
@@ -105,37 +100,31 @@ function BookingForm() {
               : undefined
           }
           aria-invalid={Boolean(errors.endDate)}
-          disabled={isSubmitting}
+          disabled={isDisabled}
           id={FORM_FIELD_IDS.BOOKING_CREATE.END_DATE}
           onChange={(event) => {
             endDateRegistration.onChange(event);
-            setSubmittedDates(null);
           }}
           type="date"
         />
       </FormField>
 
-      <Button type="submit" isLoading={isSubmitting}>
+      <Button type="submit" disabled={isDisabled} isLoading={isLoading}>
         {MESSAGES.BOOKING.SUBMIT}
       </Button>
-
-      {submittedDates && (
-        <section className="booking-form__confirmation" role="status">
-          <p>{MESSAGES.BOOKING.READY_TO_SUBMIT}</p>
-          <dl>
-            <div>
-              <dt>{MESSAGES.BOOKING.START_DATE_LABEL}</dt>
-              <dd>{submittedDates.startDate}</dd>
-            </div>
-            <div>
-              <dt>{MESSAGES.BOOKING.END_DATE_LABEL}</dt>
-              <dd>{submittedDates.endDate}</dd>
-            </div>
-          </dl>
-        </section>
-      )}
     </form>
   );
 }
+
+BookingForm.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+  isLoading: PropTypes.bool,
+  isComplete: PropTypes.bool,
+};
+
+BookingForm.defaultProps = {
+  isLoading: false,
+  isComplete: false,
+};
 
 export default BookingForm;

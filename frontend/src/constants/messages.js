@@ -54,9 +54,16 @@ export const MESSAGES = Object.freeze({
     DATE_AFTER_START: 'End date must be after start date.',
     MIN_RENTAL_DURATION: 'Rental period is shorter than the minimum duration.',
     NO_VEHICLE_SELECTED: 'Select a vehicle before creating a booking.',
+    CREATE_VALIDATION_FAILED:
+      'Please check the booking details and try again.',
+    VEHICLE_NOT_FOUND:
+      'This vehicle could not be found. Please search for another vehicle.',
+    BOOKING_CONFLICT:
+      'This vehicle is unavailable for the selected dates. Please choose different dates.',
+    CREATE_FAILED: 'Unable to create your booking right now. Please try again.',
+    CREATED: 'Your booking was created successfully.',
+    VIEW_MY_BOOKINGS: 'View My Bookings',
     BACK_TO_VEHICLES: 'Back to vehicles',
     SUBMIT: 'Review booking details',
-    READY_TO_SUBMIT:
-      'Booking details are ready to submit. This frontend-only step has not saved a booking.',
   },
 });

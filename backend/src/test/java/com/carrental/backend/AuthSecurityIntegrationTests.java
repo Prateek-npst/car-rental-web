@@ -8,6 +8,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.Date;
 import java.util.Map;
 
@@ -157,19 +158,106 @@ class AuthSecurityIntegrationTests {
 	}
 
 	@Test
-	void bookingRejectsAnotherUsersIdAndUsesAuthenticatedOwner() throws Exception {
+	void authenticatedUserCanBookWithoutUserIdAndJwtDeterminesOwner() throws Exception {
 		HttpResponse<String> registration = post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
 		Long authenticatedUserId = objectMapper.readTree(registration.body()).get("id").asLong();
 		String token = loginToken("renter@example.com", PASSWORD);
 
-		Map<String, Object> mismatchedRequest = bookingBody(999999L);
-		assertThat(post("/bookings", mismatchedRequest, token).statusCode()).isEqualTo(403);
-
-		HttpResponse<String> created = post("/bookings", bookingBody(authenticatedUserId), token);
+		HttpResponse<String> created = post("/bookings", bookingBody(), token);
 		assertThat(created.statusCode()).isEqualTo(201);
 		assertThat(objectMapper.readTree(created.body()).get("userId").asLong()).isEqualTo(authenticatedUserId);
 		Booking savedBooking = bookingRepository.findAll().getFirst();
 		assertThat(savedBooking.getUser().getId()).isEqualTo(authenticatedUserId);
+	}
+
+	@Test
+	void clientSuppliedUserIdDoesNotChangeBookingOwner() throws Exception {
+		HttpResponse<String> registration = post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		Long authenticatedUserId = objectMapper.readTree(registration.body()).get("id").asLong();
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> request = bookingBody();
+		request.put("userId", 999999L);
+
+		HttpResponse<String> created = post("/bookings", request, token);
+		assertThat(created.statusCode()).isEqualTo(201);
+		assertThat(objectMapper.readTree(created.body()).get("userId").asLong()).isEqualTo(authenticatedUserId);
+		assertThat(bookingRepository.findAll().getFirst().getUser().getId()).isEqualTo(authenticatedUserId);
+	}
+
+	@Test
+	void authenticatedAdminCanCreateBookingWithoutUserId() throws Exception {
+		User admin = userRepository.save(
+				new User("Admin", "admin@example.com", passwordEncoder.encode(PASSWORD), Role.ADMIN));
+		String token = loginToken("admin@example.com", PASSWORD);
+
+		HttpResponse<String> created = post("/bookings", bookingBody(), token);
+
+		assertThat(created.statusCode()).isEqualTo(201);
+		assertThat(objectMapper.readTree(created.body()).get("userId").asLong()).isEqualTo(admin.getId());
+		assertThat(bookingRepository.findAll().getFirst().getUser().getId()).isEqualTo(admin.getId());
+		assertThat(created.body()).doesNotContain("password", "$2a$", "$2b$");
+	}
+
+	@Test
+	void bookingRequiresAuthentication() throws Exception {
+		assertThat(post("/bookings", bookingBody()).statusCode()).isEqualTo(401);
+	}
+
+	@Test
+	void bookingReturnsNotFoundForUnknownVehicle() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> request = bookingBody();
+		request.put("vehicleId", 999999L);
+
+		assertThat(post("/bookings", request, token).statusCode()).isEqualTo(404);
+	}
+
+	@Test
+	void bookingRejectsInvalidDateRange() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> request = bookingBody();
+		request.put("startDate", "2026-11-03");
+		request.put("endDate", "2026-11-03");
+
+		assertThat(post("/bookings", request, token).statusCode()).isEqualTo(400);
+	}
+
+	@Test
+	void adminCannotCreateOverlappingBooking() throws Exception {
+		User renter = userRepository.save(
+				new User("Renter", "renter@example.com", passwordEncoder.encode(PASSWORD), Role.USER));
+		userRepository.save(
+				new User("Admin", "admin@example.com", passwordEncoder.encode(PASSWORD), Role.ADMIN));
+		bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		String adminToken = loginToken("admin@example.com", PASSWORD);
+		Map<String, Object> request = bookingBody();
+		request.put("startDate", "2026-11-02");
+		request.put("endDate", "2026-11-04");
+
+		assertThat(post("/bookings", request, adminToken).statusCode()).isEqualTo(409);
+		assertThat(bookingRepository.findAll()).hasSize(1);
+	}
+
+	@Test
+	void bookingTreatsSharedBoundaryDatesAsOverlappingButAllowsFollowingDay() throws Exception {
+		User renter = userRepository.save(
+				new User("Renter", "renter@example.com", passwordEncoder.encode(PASSWORD), Role.USER));
+		bookingRepository.save(new Booking(renter, vehicle,
+				java.time.LocalDate.parse("2026-11-01"), java.time.LocalDate.parse("2026-11-03")));
+		String token = loginToken("renter@example.com", PASSWORD);
+		Map<String, Object> boundaryRequest = bookingBody();
+		boundaryRequest.put("startDate", "2026-11-03");
+		boundaryRequest.put("endDate", "2026-11-05");
+
+		assertThat(post("/bookings", boundaryRequest, token).statusCode()).isEqualTo(409);
+
+		Map<String, Object> followingDayRequest = bookingBody();
+		followingDayRequest.put("startDate", "2026-11-04");
+		followingDayRequest.put("endDate", "2026-11-06");
+		assertThat(post("/bookings", followingDayRequest, token).statusCode()).isEqualTo(201);
 	}
 
 	private String loginToken(String email, String password) throws Exception {
@@ -211,12 +299,11 @@ class AuthSecurityIntegrationTests {
 		return Map.of("name", name, "email", email, "password", password, "role", role);
 	}
 
-	private Map<String, Object> bookingBody(Long userId) {
-		return Map.of(
-				"userId", userId,
+	private Map<String, Object> bookingBody() {
+		return new HashMap<>(Map.of(
 				"vehicleId", vehicle.getId(),
 				"startDate", "2026-11-01",
-				"endDate", "2026-11-03");
+				"endDate", "2026-11-03"));
 	}
 
 	private String expiredToken(Long userId) {
