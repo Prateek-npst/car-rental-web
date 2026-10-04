@@ -1,7 +1,7 @@
 .admin-vehicles-page {
   display: grid;
   gap: var(--space-6);
-  padding-block: var(--space-6);
+  padding-block: var(--space-8);
 }
 
 .admin-vehicles-page__heading {
@@ -17,37 +17,44 @@
   font-size: var(--font-size-2xl);
 }
 
+.admin-vehicles-page__subtitle {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-muted);
+}
+
 .admin-vehicles-page__list {
   display: grid;
-  gap: var(--space-4);
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  align-items: stretch;
+  gap: var(--space-5);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.admin-vehicles-page__details {
-  display: grid;
-  gap: var(--space-3);
+.admin-vehicles-page [role='alert'],
+.admin-vehicles-page [role='status'] {
   margin: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
 }
 
-.admin-vehicles-page__details > div {
-  display: grid;
-  grid-template-columns: minmax(8rem, 12rem) 1fr;
-  gap: var(--space-3);
+.admin-vehicles-page [role='alert'] {
+  border-left: 3px solid var(--color-error);
+  color: var(--color-error);
 }
 
-.admin-vehicles-page__details dt {
-  color: var(--color-text-muted);
+.admin-vehicles-page [role='status'] {
+  border-left: 3px solid var(--color-success);
 }
 
-.admin-vehicles-page__details dd {
-  margin: 0;
-}
+@media (max-width: 40rem) {
+  .admin-vehicles-page {
+    padding-block: var(--space-6);
+  }
 
-.admin-vehicles-page__form-actions,
-.admin-vehicles-page__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-3);
+  .admin-vehicles-page__heading {
+    align-items: flex-start;
+  }
 }

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Card from '@/components/ui/Card.jsx';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import VehicleCard from '@/features/vehicles/VehicleCard.jsx';
@@ -36,8 +37,14 @@ function VehiclesPage() {
 
   return (
     <div className="vehicles-page">
-      <h1 className="vehicles-page__title">{MESSAGES.VEHICLES.TITLE}</h1>
-      <VehicleSearchForm onSearch={handleSearch} />
+      <header className="vehicles-page__heading">
+        <p className="vehicles-page__eyebrow">DRIVE YOUR WAY</p>
+        <h1 className="vehicles-page__title">{MESSAGES.VEHICLES.TITLE}</h1>
+        <p className="vehicles-page__subtitle">{MESSAGES.VEHICLES.SUBTITLE}</p>
+      </header>
+      <Card title={MESSAGES.VEHICLES.SEARCH_FORM_TITLE}>
+        <VehicleSearchForm onSearch={handleSearch} />
+      </Card>
 
       {searchCriteria && (
         <section
@@ -75,9 +82,16 @@ function VehiclesPage() {
             {MESSAGES.VEHICLES.AVAILABLE_VEHICLES}
           </h2>
           {isLoading ? (
-            <p role="status">{MESSAGES.COMMON.LOADING}</p>
+            <p className="vehicles-page__state" role="status">
+              {MESSAGES.COMMON.LOADING}
+            </p>
           ) : searchError ? (
-            <p role="alert">{searchError}</p>
+            <p
+              className="vehicles-page__state vehicles-page__state--error"
+              role="alert"
+            >
+              {searchError}
+            </p>
           ) : availableVehicles.length > 0 ? (
             <ul className="vehicles-page__list">
               {availableVehicles.map((vehicle) => (
@@ -89,9 +103,17 @@ function VehiclesPage() {
               ))}
             </ul>
           ) : (
-            <p role="status">{MESSAGES.VEHICLES.NO_AVAILABLE_VEHICLES}</p>
+            <p className="vehicles-page__state" role="status">
+              {MESSAGES.VEHICLES.NO_AVAILABLE_VEHICLES}
+            </p>
           )}
         </section>
+      )}
+
+      {!searchCriteria && (
+        <p className="vehicles-page__prompt" role="status">
+          Enter a location and dates to see available vehicles.
+        </p>
       )}
     </div>
   );

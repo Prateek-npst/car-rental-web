@@ -46,7 +46,7 @@ import io.jsonwebtoken.security.Keys;
 @Import(AuthSecurityIntegrationTests.AdminOnlyTestController.class)
 class AuthSecurityIntegrationTests {
 	private static final String API = "/api";
-	private static final String PASSWORD = "secure-password-123";
+	private static final String PASSWORD = "Secure-password-123!";
 
 	@LocalServerPort
 	private int port;

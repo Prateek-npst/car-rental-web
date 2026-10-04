@@ -9,6 +9,11 @@
   font-size: var(--font-size-2xl);
 }
 
+.create-booking-page__subtitle {
+  margin: calc(-1 * var(--space-4)) 0 0;
+  color: var(--color-text-muted);
+}
+
 .create-booking-page__vehicle-details {
   display: grid;
   gap: var(--space-3);
@@ -27,4 +32,24 @@
 
 .create-booking-page__vehicle-details dd {
   margin: 0;
+}
+
+.create-booking-page > [role='alert'],
+.create-booking-page > [role='status'] {
+  margin: 0;
+  padding: var(--space-4);
+  border-left: 3px solid var(--color-accent);
+  background: var(--color-accent-soft);
+}
+
+.create-booking-page > [role='alert'] {
+  border-left-color: var(--color-error);
+  background: rgb(185 28 28 / 6%);
+  color: var(--color-error);
+}
+
+@media (max-width: 40rem) {
+  .create-booking-page__vehicle-details > div {
+    grid-template-columns: minmax(6.5rem, 1fr) 1fr;
+  }
 }

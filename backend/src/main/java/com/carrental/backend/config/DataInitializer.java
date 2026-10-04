@@ -28,7 +28,7 @@ public class DataInitializer {
 			PasswordEncoder passwordEncoder) {
 		return args -> {
 			if (userRepository.count() == 0) {
-				userRepository.save(new User("Renter", "renter@example.com", passwordEncoder.encode("password123"), Role.USER));
+				userRepository.save(new User("Renter", "renter@example.com", passwordEncoder.encode("Password@123"), Role.USER));
 			}
 
 			if (vehicleRepository.count() == 0) {

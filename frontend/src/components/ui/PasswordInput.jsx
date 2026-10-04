@@ -8,9 +8,10 @@ function PasswordInput({ id, name, disabled = false, ...props }) {
   const [isVisible, setIsVisible] = useState(false);
 
   const inputType = isVisible ? 'text' : 'password';
-  const toggleLabel = isVisible
+  const toggleText = isVisible
     ? MESSAGES.PASSWORD_INPUT.HIDE
     : MESSAGES.PASSWORD_INPUT.SHOW;
+  const toggleLabel = isVisible ? 'Hide password' : 'Show password';
 
   function handleToggle() {
     setIsVisible((currentValue) => !currentValue);
@@ -32,8 +33,11 @@ function PasswordInput({ id, name, disabled = false, ...props }) {
         variant="secondary"
         disabled={disabled}
         onClick={handleToggle}
+        aria-label={toggleLabel}
+        aria-pressed={isVisible}
+        className="password-input__toggle"
       >
-        {toggleLabel}
+        {toggleText}
       </Button>
     </div>
   );

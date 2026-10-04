@@ -13,23 +13,39 @@ describe('PasswordInput', () => {
     );
   });
 
-  it('shows the password when Show is clicked', () => {
+  it('exposes accessible show and hide labels for screen readers', () => {
     render(
       <PasswordInput aria-label="Password" id="password" name="password" />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show' }));
+    expect(
+      screen.getByRole('button', { name: 'Show password' }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+
+    expect(
+      screen.getByRole('button', { name: 'Hide password' }),
+    ).toBeInTheDocument();
+  });
+
+  it('shows the password when Show password is clicked', () => {
+    render(
+      <PasswordInput aria-label="Password" id="password" name="password" />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
 
     expect(screen.getByLabelText('Password')).toHaveAttribute('type', 'text');
   });
 
-  it('hides the password again when Hide is clicked', () => {
+  it('hides the password again when Hide password is clicked', () => {
     render(
       <PasswordInput aria-label="Password" id="password" name="password" />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: 'Show' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Hide' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show password' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Hide password' }));
 
     expect(screen.getByLabelText('Password')).toHaveAttribute(
       'type',

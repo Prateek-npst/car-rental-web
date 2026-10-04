@@ -5,8 +5,23 @@
   gap: var(--space-4);
 }
 
+.vehicle-search-form > .button {
+  align-self: end;
+  min-width: 7rem;
+}
+
 @media (max-width: 48rem) {
   .vehicle-search-form {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .vehicle-search-form > .button {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 34rem) {
+  .vehicle-search-form {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

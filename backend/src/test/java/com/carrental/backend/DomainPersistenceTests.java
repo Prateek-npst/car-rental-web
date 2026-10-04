@@ -32,7 +32,7 @@ class DomainPersistenceTests {
 
 	@Test
 	void persistsDomainEntitiesAndResolvesRequiredRepositoryQueries() {
-		User user = userRepository.save(new User("Renter", "renter@example.com", "password123", Role.USER));
+		User user = userRepository.save(new User("Renter", "renter@example.com", "StrongPass!2024", Role.USER));
 		Vehicle vehicle = vehicleRepository.save(
 				new Vehicle("CC-101", "City Compact", new BigDecimal("65.00"), "Central City"));
 

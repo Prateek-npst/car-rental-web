@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button.jsx';
 import Card from '@/components/ui/Card.jsx';
 import { MESSAGES } from '@/constants/messages.js';
+import VehicleCard from '@/features/vehicles/VehicleCard.jsx';
 import VehicleForm from '@/features/vehicles/VehicleForm.jsx';
 import {
   createVehicle,
@@ -114,9 +115,14 @@ function AdminVehiclesPage() {
   return (
     <div className="admin-vehicles-page">
       <div className="admin-vehicles-page__heading">
-        <h1 className="admin-vehicles-page__title">
-          {MESSAGES.VEHICLES.ADMIN_TITLE}
-        </h1>
+        <div>
+          <h1 className="admin-vehicles-page__title">
+            {MESSAGES.VEHICLES.ADMIN_TITLE}
+          </h1>
+          <p className="admin-vehicles-page__subtitle">
+            Add vehicles to the fleet or update their details.
+          </p>
+        </div>
         <Button onClick={startCreate} type="button">
           {MESSAGES.VEHICLES.ADMIN_ADD}
         </Button>
@@ -156,42 +162,13 @@ function AdminVehiclesPage() {
       ) : (
         <ul className="admin-vehicles-page__list">
           {vehicles.map((vehicle) => (
-            <li key={vehicle.id}>
-              <Card title={vehicle.model}>
-                <dl className="admin-vehicles-page__details">
-                  <div>
-                    <dt>{MESSAGES.VEHICLES.REG_NUMBER_LABEL}</dt>
-                    <dd>{vehicle.regNumber}</dd>
-                  </div>
-                  <div>
-                    <dt>{MESSAGES.VEHICLES.LOCATION_LABEL}</dt>
-                    <dd>{vehicle.location}</dd>
-                  </div>
-                  <div>
-                    <dt>{MESSAGES.VEHICLES.DAILY_RATE_LABEL}</dt>
-                    <dd>{vehicle.dailyRate}</dd>
-                  </div>
-                </dl>
-                <div className="admin-vehicles-page__actions">
-                  <Button
-                    disabled={deletingVehicleId !== null}
-                    onClick={() => startEdit(vehicle)}
-                    type="button"
-                    variant="secondary"
-                  >
-                    {MESSAGES.VEHICLES.ADMIN_EDIT}
-                  </Button>
-                  <Button
-                    disabled={deletingVehicleId !== null}
-                    isLoading={deletingVehicleId === vehicle.id}
-                    onClick={() => handleDelete(vehicle)}
-                    type="button"
-                  >
-                    {MESSAGES.VEHICLES.ADMIN_DELETE}
-                  </Button>
-                </div>
-              </Card>
-            </li>
+            <VehicleCard
+              key={vehicle.id}
+              deletingVehicleId={deletingVehicleId}
+              onDelete={handleDelete}
+              onEdit={startEdit}
+              vehicle={vehicle}
+            />
           ))}
         </ul>
       )}

@@ -86,7 +86,7 @@ describe('LoginPage', () => {
   it('submits credentials and navigates to the vehicles route on success', async () => {
     mockLogin.mockResolvedValue(undefined);
     renderLoginPage();
-    fillLoginForm('renter@example.com', 'correct-horse-battery');
+    fillLoginForm('renter@example.com', 'Correct-horse-battery1!');
 
     fireEvent.click(screen.getByRole('button', { name: MESSAGES.AUTH.LOGIN }));
 
@@ -95,7 +95,7 @@ describe('LoginPage', () => {
     ).toBeInTheDocument();
     expect(mockLogin).toHaveBeenCalledWith({
       email: 'renter@example.com',
-      password: 'correct-horse-battery',
+      password: 'Correct-horse-battery1!',
     });
   });
 
@@ -133,6 +133,18 @@ describe('LoginPage', () => {
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 
+  it('shows a network-safe message when login fails because the server is unavailable', async () => {
+    mockLogin.mockRejectedValue(new Error(MESSAGES.AUTH.NETWORK_LOGIN_ERROR));
+    renderLoginPage();
+    fillLoginForm('renter@example.com', 'correct-horse-battery');
+
+    fireEvent.click(screen.getByRole('button', { name: MESSAGES.AUTH.LOGIN }));
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      MESSAGES.AUTH.NETWORK_LOGIN_ERROR,
+    );
+  });
+
   it('prevents duplicate submissions while login is pending', async () => {
     let resolveLogin;
     mockLogin.mockImplementation(
@@ -142,7 +154,7 @@ describe('LoginPage', () => {
         }),
     );
     renderLoginPage();
-    fillLoginForm('renter@example.com', 'correct-horse-battery');
+    fillLoginForm('renter@example.com', 'Correct-horse-battery1!');
 
     fireEvent.click(screen.getByRole('button', { name: MESSAGES.AUTH.LOGIN }));
 

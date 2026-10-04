@@ -8,6 +8,11 @@ import {
   removeAuthToken,
   setAuthToken,
 } from '@/utils/tokenStorage.js';
+import {
+  getAuthProfile,
+  removeAuthProfile,
+  setAuthProfile,
+} from '@/utils/authProfileStorage.js';
 
 vi.mock('@/services/authService.js', () => ({
   login: vi.fn(),
@@ -32,11 +37,13 @@ function createToken(role = ROLES.USER, subject = '7') {
 describe('AuthContext', () => {
   beforeEach(() => {
     removeAuthToken();
+    removeAuthProfile();
     vi.resetAllMocks();
   });
 
   afterEach(() => {
     removeAuthToken();
+    removeAuthProfile();
   });
 
   it('starts unauthenticated when no token is stored', () => {
@@ -64,6 +71,23 @@ describe('AuthContext', () => {
     expect(result.current.isRestoring).toBe(false);
   });
 
+  it('restores display-only profile fields for the user verified by the token', () => {
+    setAuthToken(createToken(ROLES.USER, '7'));
+    setAuthProfile({ id: 7, name: 'Renter Name', email: 'renter@example.com' });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    expect(result.current.user).toEqual({
+      id: 7,
+      role: ROLES.USER,
+      name: 'Renter Name',
+      email: 'renter@example.com',
+    });
+    expect(getAuthProfile(8)).toBeNull();
+  });
+
   it('persists the login token and updates authentication state', async () => {
     const credentials = { email: 'renter@example.com', password: 'secret' };
     const user = {
@@ -88,6 +112,10 @@ describe('AuthContext', () => {
     expect(result.current.user).toEqual(user);
     expect(result.current.isAuthenticated).toBe(true);
     expect(getAuthToken()).toBe('session-token');
+    expect(getAuthProfile(1)).toEqual({
+      name: user.name,
+      email: user.email,
+    });
   });
 
   it('clears the token and user when the app receives an expired-token event', () => {
@@ -105,6 +133,7 @@ describe('AuthContext', () => {
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
     expect(getAuthToken()).toBeNull();
+    expect(getAuthProfile(7)).toBeNull();
   });
 
   it('removes the token and clears authentication state on logout', () => {
@@ -119,6 +148,7 @@ describe('AuthContext', () => {
     expect(result.current.token).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
     expect(getAuthToken()).toBeNull();
+    expect(getAuthProfile(7)).toBeNull();
   });
 
   it('returns the registration response from the auth service', async () => {

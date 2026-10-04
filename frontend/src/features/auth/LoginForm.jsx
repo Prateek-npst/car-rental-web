@@ -33,26 +33,41 @@ function LoginForm() {
   const location = useLocation();
   const { login } = useAuth();
   const [authError, setAuthError] = useState('');
+
   const {
     register,
     handleSubmit,
+    clearErrors,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(loginSchema),
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
     defaultValues: {
       email: '',
       password: '',
     },
   });
+
   const emailRegistration = register('email');
   const passwordRegistration = register('password');
+
+  function clearFieldError(fieldName) {
+    clearErrors(fieldName);
+    setAuthError('');
+  }
 
   async function submitLogin(credentials) {
     try {
       await login(credentials);
       navigate(location.state?.from || ROUTES.VEHICLES, { replace: true });
-    } catch {
-      setAuthError(MESSAGES.AUTH.INVALID_CREDENTIALS);
+    } catch (error) {
+      const nextError =
+        error?.message === MESSAGES.AUTH.NETWORK_LOGIN_ERROR
+          ? MESSAGES.AUTH.NETWORK_LOGIN_ERROR
+          : MESSAGES.AUTH.INVALID_CREDENTIALS;
+
+      setAuthError(nextError);
     }
   }
 
@@ -86,7 +101,7 @@ function LoginForm() {
           id={FORM_FIELD_IDS.AUTH_LOGIN.EMAIL}
           onChange={(event) => {
             emailRegistration.onChange(event);
-            setAuthError('');
+            clearFieldError('email');
           }}
           type="email"
         />
@@ -110,7 +125,7 @@ function LoginForm() {
           id={FORM_FIELD_IDS.AUTH_LOGIN.PASSWORD}
           onChange={(event) => {
             passwordRegistration.onChange(event);
-            setAuthError('');
+            clearFieldError('password');
           }}
         />
       </FormField>

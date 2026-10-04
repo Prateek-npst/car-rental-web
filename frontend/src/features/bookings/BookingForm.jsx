@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { z } from 'zod';
 import Button from '@/components/ui/Button.jsx';
@@ -9,6 +9,7 @@ import { FORM_FIELD_IDS } from '@/constants/formFieldIds.js';
 import { LIMITS } from '@/constants/limits.js';
 import { MESSAGES } from '@/constants/messages.js';
 import './BookingForm.css';
+import { getTodayDateInputValue } from '@/utils/bookingDates.js';
 
 function meetsMinimumDuration(startDate, endDate) {
   const earliestEndDate = new Date(`${startDate}T00:00:00Z`);
@@ -23,6 +24,28 @@ const bookingSchema = z
   .object({
     startDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
     endDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
+  })
+  .refine(
+    ({ startDate }) => !startDate || startDate >= getTodayDateInputValue(),
+    {
+      message: MESSAGES.BOOKING.DATE_BEFORE_TODAY,
+      path: ['startDate'],
+    },
+  )
+  .refine(
+    ({ startDate }) => !startDate || startDate <= LIMITS.BOOKING.MAX_DATE,
+    {
+      message: MESSAGES.BOOKING.DATE_AFTER_MAX,
+      path: ['startDate'],
+    },
+  )
+  .refine(({ endDate }) => !endDate || endDate >= getTodayDateInputValue(), {
+    message: MESSAGES.BOOKING.DATE_BEFORE_TODAY,
+    path: ['endDate'],
+  })
+  .refine(({ endDate }) => !endDate || endDate <= LIMITS.BOOKING.MAX_DATE, {
+    message: MESSAGES.BOOKING.DATE_AFTER_MAX,
+    path: ['endDate'],
   })
   .refine(
     ({ startDate, endDate }) => !startDate || !endDate || endDate > startDate,
@@ -54,6 +77,7 @@ function BookingForm({
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(bookingSchema),
@@ -62,16 +86,15 @@ function BookingForm({
       endDate: initialDates?.endDate ?? '',
     },
   });
+  const startDate = useWatch({ control, name: 'startDate' });
+  const today = getTodayDateInputValue();
+  const earliestEndDate = startDate > today ? startDate : today;
   const startDateRegistration = register('startDate');
   const endDateRegistration = register('endDate');
   const isDisabled = isLoading || isSubmitting || isComplete;
 
   return (
-    <form
-      className="booking-form"
-      noValidate
-      onSubmit={handleSubmit(onSubmit)}
-    >
+    <form className="booking-form" noValidate onSubmit={handleSubmit(onSubmit)}>
       <FormField
         error={errors.startDate?.message}
         htmlFor={FORM_FIELD_IDS.BOOKING_CREATE.START_DATE}
@@ -87,6 +110,8 @@ function BookingForm({
           aria-invalid={Boolean(errors.startDate)}
           disabled={isDisabled}
           id={FORM_FIELD_IDS.BOOKING_CREATE.START_DATE}
+          max={LIMITS.BOOKING.MAX_DATE}
+          min={today}
           onChange={(event) => {
             startDateRegistration.onChange(event);
           }}
@@ -109,6 +134,8 @@ function BookingForm({
           aria-invalid={Boolean(errors.endDate)}
           disabled={isDisabled}
           id={FORM_FIELD_IDS.BOOKING_CREATE.END_DATE}
+          max={LIMITS.BOOKING.MAX_DATE}
+          min={earliestEndDate}
           onChange={(event) => {
             endDateRegistration.onChange(event);
           }}

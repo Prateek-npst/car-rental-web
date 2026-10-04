@@ -1,12 +1,14 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import PropTypes from 'prop-types';
 import { z } from 'zod';
 import Button from '@/components/ui/Button.jsx';
 import FormField from '@/components/ui/FormField.jsx';
 import TextInput from '@/components/ui/TextInput.jsx';
 import { FORM_FIELD_IDS } from '@/constants/formFieldIds.js';
+import { LIMITS } from '@/constants/limits.js';
 import { MESSAGES } from '@/constants/messages.js';
+import { getTodayDateInputValue } from '@/utils/bookingDates.js';
 import './VehicleSearchForm.css';
 
 const vehicleSearchSchema = z
@@ -15,6 +17,35 @@ const vehicleSearchSchema = z
     pickupDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
     dropoffDate: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
   })
+  .refine(
+    ({ pickupDate }) => !pickupDate || pickupDate >= getTodayDateInputValue(),
+    {
+      message: MESSAGES.BOOKING.DATE_BEFORE_TODAY,
+      path: ['pickupDate'],
+    },
+  )
+  .refine(
+    ({ pickupDate }) => !pickupDate || pickupDate <= LIMITS.BOOKING.MAX_DATE,
+    {
+      message: MESSAGES.BOOKING.DATE_AFTER_MAX,
+      path: ['pickupDate'],
+    },
+  )
+  .refine(
+    ({ dropoffDate }) =>
+      !dropoffDate || dropoffDate >= getTodayDateInputValue(),
+    {
+      message: MESSAGES.BOOKING.DATE_BEFORE_TODAY,
+      path: ['dropoffDate'],
+    },
+  )
+  .refine(
+    ({ dropoffDate }) => !dropoffDate || dropoffDate <= LIMITS.BOOKING.MAX_DATE,
+    {
+      message: MESSAGES.BOOKING.DATE_AFTER_MAX,
+      path: ['dropoffDate'],
+    },
+  )
   .refine(
     ({ pickupDate, dropoffDate }) =>
       !pickupDate || !dropoffDate || dropoffDate > pickupDate,
@@ -28,6 +59,7 @@ function VehicleSearchForm({ onSearch }) {
   const {
     register,
     handleSubmit,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(vehicleSearchSchema),
@@ -37,6 +69,9 @@ function VehicleSearchForm({ onSearch }) {
       dropoffDate: '',
     },
   });
+  const pickupDate = useWatch({ control, name: 'pickupDate' });
+  const today = getTodayDateInputValue();
+  const earliestDropoffDate = pickupDate > today ? pickupDate : today;
 
   return (
     <form
@@ -78,6 +113,8 @@ function VehicleSearchForm({ onSearch }) {
           aria-invalid={Boolean(errors.pickupDate)}
           disabled={isSubmitting}
           id={FORM_FIELD_IDS.VEHICLE_SEARCH.PICKUP_DATE}
+          max={LIMITS.BOOKING.MAX_DATE}
+          min={today}
           type="date"
         />
       </FormField>
@@ -97,6 +134,8 @@ function VehicleSearchForm({ onSearch }) {
           aria-invalid={Boolean(errors.dropoffDate)}
           disabled={isSubmitting}
           id={FORM_FIELD_IDS.VEHICLE_SEARCH.DROPOFF_DATE}
+          max={LIMITS.BOOKING.MAX_DATE}
+          min={earliestDropoffDate}
           type="date"
         />
       </FormField>

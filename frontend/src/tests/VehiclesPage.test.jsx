@@ -2,9 +2,11 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGES } from '@/constants/messages.js';
+import { LIMITS } from '@/constants/limits.js';
 import { ROUTES } from '@/constants/routes.js';
 import CreateBookingPage from '@/pages/CreateBookingPage.jsx';
 import VehiclesPage from '@/pages/VehiclesPage.jsx';
+import { getTodayDateInputValue } from '@/utils/bookingDates.js';
 import { searchAvailableVehicles } from '@/services/vehicleService.js';
 
 vi.mock('@/services/vehicleService.js', () => ({
@@ -61,6 +63,12 @@ describe('VehiclesPage', () => {
       screen.getByLabelText(MESSAGES.VEHICLES.DROPOFF_DATE_LABEL),
     ).toBeInTheDocument();
     expect(
+      screen.getByLabelText(MESSAGES.VEHICLES.PICKUP_DATE_LABEL),
+    ).toHaveAttribute('min', getTodayDateInputValue());
+    expect(
+      screen.getByLabelText(MESSAGES.VEHICLES.PICKUP_DATE_LABEL),
+    ).toHaveAttribute('max', LIMITS.BOOKING.MAX_DATE);
+    expect(
       screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
     ).toBeInTheDocument();
   });
@@ -102,6 +110,63 @@ describe('VehiclesPage', () => {
         name: MESSAGES.VEHICLES.SEARCH_CRITERIA,
       }),
     ).not.toBeInTheDocument();
+  });
+
+  it('rejects pickup dates before today and dates after the maximum', async () => {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayValue = getTodayDateInputValue(yesterday);
+    const today = getTodayDateInputValue();
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const { unmount } = renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: yesterdayValue,
+      dropoffDate: today,
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
+    );
+    expect(
+      await screen.findByText(MESSAGES.BOOKING.DATE_BEFORE_TODAY),
+    ).toBeVisible();
+    expect(searchAvailableVehicles).not.toHaveBeenCalled();
+    unmount();
+
+    renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: getTodayDateInputValue(tomorrow),
+      dropoffDate: '2051-01-01',
+    });
+    fireEvent.click(
+      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
+    );
+    expect(
+      await screen.findByText(MESSAGES.BOOKING.DATE_AFTER_MAX),
+    ).toBeVisible();
+    expect(searchAvailableVehicles).not.toHaveBeenCalled();
+  });
+
+  it('accepts the maximum date when it is the drop-off date', async () => {
+    searchAvailableVehicles.mockResolvedValue([backendVehicle]);
+    renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: '2050-12-30',
+      dropoffDate: '2050-12-31',
+    });
+
+    fireEvent.click(
+      screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }),
+    );
+
+    expect(
+      await screen.findByRole('heading', { name: 'Backend Sedan' }),
+    ).toBeVisible();
+    expect(searchAvailableVehicles).toHaveBeenCalledOnce();
   });
 
   it('displays backend vehicles and the submitted criteria', async () => {

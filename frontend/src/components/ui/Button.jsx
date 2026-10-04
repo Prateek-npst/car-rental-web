@@ -15,6 +15,7 @@ function Button({
   disabled = false,
   onClick,
   className = '',
+  ...props
 }) {
   const isDisabled = disabled || isLoading;
 
@@ -24,6 +25,7 @@ function Button({
       className={`button button--${variant} ${className}`.trim()}
       disabled={isDisabled}
       onClick={onClick}
+      {...props}
     >
       {isLoading ? MESSAGES.COMMON.LOADING : children}
     </button>

@@ -15,6 +15,7 @@ import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 @Entity
@@ -37,6 +38,8 @@ public class User {
 
 	@NotBlank
 	@Size(min = ValidationLimits.USER_PASSWORD_MIN_LENGTH, max = ValidationLimits.USER_PASSWORD_MAX_LENGTH)
+	@Pattern(regexp = ValidationLimits.USER_PASSWORD_PATTERN,
+			message = "Password must be at least 8 characters and include an uppercase letter, lowercase letter, number, and special character.")
 	@Column(nullable = false, length = ValidationLimits.USER_PASSWORD_MAX_LENGTH)
 	private String password;
 

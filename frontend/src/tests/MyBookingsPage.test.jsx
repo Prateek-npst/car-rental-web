@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MESSAGES } from '@/constants/messages.js';
+import { ROLES } from '@/constants/roles.js';
 import MyBookingsPage from '@/pages/MyBookingsPage.jsx';
 import {
   deleteBooking,
@@ -12,6 +13,12 @@ vi.mock('@/services/bookingService.js', () => ({
   deleteBooking: vi.fn(),
   getBookings: vi.fn(),
   updateBooking: vi.fn(),
+}));
+
+const { authState } = vi.hoisted(() => ({ authState: { user: null } }));
+
+vi.mock('@/context/AuthContext.jsx', () => ({
+  useAuth: () => authState,
 }));
 
 const booking = {
@@ -29,7 +36,8 @@ const booking = {
   },
 };
 
-function renderPage() {
+function renderPage(role = ROLES.USER) {
+  authState.user = { id: 5, role };
   return render(<MyBookingsPage />);
 }
 
@@ -55,11 +63,34 @@ describe('MyBookingsPage', () => {
     );
     renderPage();
 
-    expect(screen.getByRole('status')).toHaveTextContent(MESSAGES.COMMON.LOADING);
+    expect(screen.getByRole('status')).toHaveTextContent(
+      MESSAGES.COMMON.LOADING,
+    );
 
     resolveBookings([booking]);
     expect(
       await screen.findByRole('heading', { name: booking.vehicle.model }),
+    ).toBeVisible();
+  });
+
+  it('uses My Bookings as the USER page title', () => {
+    renderPage(ROLES.USER);
+
+    expect(
+      screen.getByRole('heading', { name: MESSAGES.BOOKING.MY_BOOKINGS_TITLE }),
+    ).toBeVisible();
+  });
+
+  it('uses All Bookings as the ADMIN page title', () => {
+    renderPage(ROLES.ADMIN);
+
+    expect(
+      screen.getByRole('heading', {
+        name: MESSAGES.BOOKING.ALL_BOOKINGS_TITLE,
+      }),
+    ).toBeVisible();
+    expect(
+      screen.getByText(MESSAGES.BOOKING.ALL_BOOKINGS_DESCRIPTION),
     ).toBeVisible();
   });
 
@@ -127,7 +158,9 @@ describe('MyBookingsPage', () => {
       });
       expect(getBookings).toHaveBeenCalledTimes(2);
     });
-    expect(await screen.findByText(updatedBooking.startDate)).toBeInTheDocument();
+    expect(
+      await screen.findByText(updatedBooking.startDate),
+    ).toBeInTheDocument();
     expect(screen.getByText(MESSAGES.BOOKING.UPDATED)).toBeVisible();
   });
 
@@ -145,7 +178,9 @@ describe('MyBookingsPage', () => {
       MESSAGES.BOOKING.CONFIRM_CANCEL,
     );
     expect(deleteBooking).not.toHaveBeenCalled();
-    expect(screen.getByRole('heading', { name: booking.vehicle.model })).toBeVisible();
+    expect(
+      screen.getByRole('heading', { name: booking.vehicle.model }),
+    ).toBeVisible();
   });
 
   it('cancels after confirmation and refreshes the booking list', async () => {

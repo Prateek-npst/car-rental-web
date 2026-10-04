@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { useForm, useWatch } from 'react-hook-form';
 import { z } from 'zod';
 import Button from '@/components/ui/Button.jsx';
 import FormField from '@/components/ui/FormField.jsx';
@@ -31,7 +31,13 @@ const registrationSchema = z
       .string()
       .min(1, MESSAGES.COMMON.REQUIRED_FIELD)
       .min(LIMITS.AUTH.PASSWORD_MIN_LENGTH, MESSAGES.AUTH.PASSWORD_TOO_SHORT)
-      .max(LIMITS.AUTH.PASSWORD_MAX_LENGTH, MESSAGES.AUTH.PASSWORD_TOO_LONG),
+      .max(LIMITS.AUTH.PASSWORD_MAX_LENGTH, MESSAGES.AUTH.PASSWORD_TOO_LONG)
+      .refine(
+        (value) => LIMITS.AUTH.PASSWORD_PATTERN.test(value),
+        {
+          message: 'Password must include uppercase, lowercase, number, and special character.',
+        },
+      ),
     confirmPassword: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),
   })
   .refine((values) => values.password === values.confirmPassword, {
@@ -51,6 +57,9 @@ function RegistrationForm() {
   const {
     register: registerField,
     handleSubmit,
+    clearErrors,
+    trigger,
+    control,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(registrationSchema),
@@ -60,18 +69,47 @@ function RegistrationForm() {
       password: '',
       confirmPassword: '',
     },
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
   });
+  const passwordValue = useWatch({
+    control,
+    name: 'password',
+    defaultValue: '',
+  });
+  const confirmPasswordValue = useWatch({
+    control,
+    name: 'confirmPassword',
+    defaultValue: '',
+  });
+  const passwordRequirementStatus = LIMITS.AUTH.PASSWORD_REQUIREMENTS.map(
+    (requirement) => ({
+      ...requirement,
+      isMet: requirement.test(passwordValue),
+    }),
+  );
   const nameRegistration = registerField('name');
   const emailRegistration = registerField('email');
   const passwordRegistration = registerField('password');
   const confirmPasswordRegistration = registerField('confirmPassword');
 
+  function clearFieldError(fieldName) {
+    clearErrors(fieldName);
+    setRegistrationError('');
+  }
+
   async function submitRegistration(registrationData) {
     try {
       await registerUser(registrationData);
       navigate(ROUTES.LOGIN);
-    } catch {
-      setRegistrationError(MESSAGES.AUTH.REGISTRATION_FAILED);
+    } catch (error) {
+      const nextError =
+        error?.message === MESSAGES.AUTH.REGISTRATION_NETWORK_ERROR ||
+        error?.message === MESSAGES.AUTH.REGISTRATION_DUPLICATE_EMAIL
+          ? error.message
+          : MESSAGES.AUTH.REGISTRATION_FAILED;
+
+      setRegistrationError(nextError);
     }
   }
 
@@ -154,9 +192,27 @@ function RegistrationForm() {
           id={FORM_FIELD_IDS.AUTH_REGISTRATION.PASSWORD}
           onChange={(event) => {
             passwordRegistration.onChange(event);
-            setRegistrationError('');
+            clearFieldError('password');
+            if (confirmPasswordValue) {
+              trigger('confirmPassword');
+            }
           }}
         />
+        <div
+          aria-live="polite"
+          aria-atomic="true"
+          className="registration-form__password-strength"
+          role="status"
+        >
+          <p>{MESSAGES.AUTH.PASSWORD_STRENGTH_TITLE}</p>
+          <ul>
+            {passwordRequirementStatus.map((requirement) => (
+              <li key={requirement.key} data-met={requirement.isMet}>
+                {requirement.isMet ? '✓' : '•'} {requirement.label}
+              </li>
+            ))}
+          </ul>
+        </div>
       </FormField>
 
       <FormField
@@ -177,7 +233,7 @@ function RegistrationForm() {
           id={FORM_FIELD_IDS.AUTH_REGISTRATION.CONFIRM_PASSWORD}
           onChange={(event) => {
             confirmPasswordRegistration.onChange(event);
-            setRegistrationError('');
+            clearFieldError('confirmPassword');
           }}
         />
       </FormField>

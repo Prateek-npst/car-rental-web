@@ -7,11 +7,19 @@ export async function login(credentials) {
 
     return response.data;
   } catch (error) {
+    if (error?.code === 'ERR_NETWORK') {
+      throw new Error(MESSAGES.AUTH.NETWORK_LOGIN_ERROR, { cause: error });
+    }
+
     if (error?.response?.status === 401) {
       throw new Error(MESSAGES.AUTH.INVALID_CREDENTIALS, { cause: error });
     }
 
-    throw new Error(MESSAGES.COMMON.SERVER_ERROR, { cause: error });
+    if (error?.response?.status === 400) {
+      throw new Error(MESSAGES.AUTH.INVALID_CREDENTIALS, { cause: error });
+    }
+
+    throw new Error(MESSAGES.AUTH.NETWORK_LOGIN_ERROR, { cause: error });
   }
 }
 
@@ -24,13 +32,20 @@ export async function register(registrationData) {
 
     return response.data;
   } catch (error) {
-    if (
-      [400, 409, 422].includes(error?.response?.status) ||
-      error?.response?.status === 500
-    ) {
+    if (error?.code === 'ERR_NETWORK') {
+      throw new Error(MESSAGES.AUTH.REGISTRATION_NETWORK_ERROR, { cause: error });
+    }
+
+    if (error?.response?.status === 409) {
+      throw new Error(MESSAGES.AUTH.REGISTRATION_DUPLICATE_EMAIL, {
+        cause: error,
+      });
+    }
+
+    if (error?.response?.status === 400 || error?.response?.status === 500) {
       throw new Error(MESSAGES.AUTH.REGISTRATION_FAILED, { cause: error });
     }
 
-    throw new Error(MESSAGES.AUTH.REGISTRATION_FAILED, { cause: error });
+    throw new Error(MESSAGES.AUTH.REGISTRATION_NETWORK_ERROR, { cause: error });
   }
 }

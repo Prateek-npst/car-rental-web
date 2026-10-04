@@ -6,8 +6,14 @@
 
 .app-layout__main {
   width: 100%;
-  max-width: 1200px;
+  max-width: 1280px;
   flex: 1;
   margin: 0 auto;
-  padding: var(--space-6);
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
+}
+
+@media (max-width: 40rem) {
+  .app-layout__main {
+    padding-block: var(--space-4);
+  }
 }

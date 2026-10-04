@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button.jsx';
 import Card from '@/components/ui/Card.jsx';
 import { MESSAGES } from '@/constants/messages.js';
+import { ROLES } from '@/constants/roles.js';
+import { useAuth } from '@/context/AuthContext.jsx';
 import BookingForm from '@/features/bookings/BookingForm.jsx';
 import {
   deleteBooking,
@@ -11,6 +13,8 @@ import {
 import './MyBookingsPage.css';
 
 function MyBookingsPage() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === ROLES.ADMIN;
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -104,9 +108,18 @@ function MyBookingsPage() {
 
   return (
     <div className="my-bookings-page">
-      <h1 className="my-bookings-page__title">
-        {MESSAGES.BOOKING.MY_BOOKINGS_TITLE}
-      </h1>
+      <header className="my-bookings-page__heading">
+        <h1 className="my-bookings-page__title">
+          {isAdmin
+            ? MESSAGES.BOOKING.ALL_BOOKINGS_TITLE
+            : MESSAGES.BOOKING.MY_BOOKINGS_TITLE}
+        </h1>
+        <p>
+          {isAdmin
+            ? MESSAGES.BOOKING.ALL_BOOKINGS_DESCRIPTION
+            : MESSAGES.BOOKING.MY_BOOKINGS_DESCRIPTION}
+        </p>
+      </header>
 
       {actionError && <p role="alert">{actionError}</p>}
       {actionMessage && <p role="status">{actionMessage}</p>}

@@ -27,7 +27,7 @@ function renderRegistrationPage() {
 function fillRegistrationForm({
   name = 'Renter Name',
   email = 'renter@example.com',
-  password = 'correct-horse-battery',
+  password = 'Correct-horse-battery1!',
   confirmPassword = password,
 } = {}) {
   fireEvent.change(screen.getByLabelText(MESSAGES.AUTH.NAME_LABEL), {
@@ -95,6 +95,27 @@ describe('RegistrationPage', () => {
     expect(mockRegister).not.toHaveBeenCalled();
   });
 
+  it('shows password strength guidance when the password field is used', async () => {
+    renderRegistrationPage();
+
+    fireEvent.change(screen.getByLabelText(MESSAGES.AUTH.PASSWORD_LABEL), {
+      target: { value: 'Rohit@2004' },
+    });
+
+    expect(
+      await screen.findByText(MESSAGES.AUTH.PASSWORD_STRENGTH_TITLE),
+    ).toBeVisible();
+    expect(screen.getByText(/Minimum length/i)).toBeInTheDocument();
+    expect(screen.getByText(/Uppercase letter/i)).toBeInTheDocument();
+    expect(screen.getByText(/Lowercase letter/i)).toBeInTheDocument();
+    expect(screen.getByText(/Number/i)).toBeInTheDocument();
+    expect(screen.getByText(/Special character/i)).toBeInTheDocument();
+
+    const passwordRequirements = screen.getAllByRole('listitem');
+    expect(passwordRequirements).toHaveLength(5);
+    expect(passwordRequirements.every((item) => item.dataset.met === 'true')).toBe(true);
+  });
+
   it('rejects a password below the configured minimum', async () => {
     renderRegistrationPage();
     fillRegistrationForm({ password: 'short' });
@@ -138,7 +159,7 @@ describe('RegistrationPage', () => {
     expect(mockRegister).toHaveBeenCalledWith({
       name: 'Renter Name',
       email: 'renter@example.com',
-      password: 'correct-horse-battery',
+      password: 'Correct-horse-battery1!',
     });
   });
 

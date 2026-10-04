@@ -6,7 +6,9 @@
   font-weight: 600;
   transition:
     background-color 150ms ease,
-    border-color 150ms ease;
+    border-color 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
 }
 
 .button--primary {
@@ -26,6 +28,11 @@
 
 .button--secondary:hover:not(:disabled) {
   background: var(--color-background);
+}
+
+.button:focus-visible {
+  outline: 3px solid var(--color-primary);
+  outline-offset: 2px;
 }
 
 .button:disabled {

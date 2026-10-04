@@ -44,6 +44,9 @@ function CreateBookingPage() {
       <h1 className="create-booking-page__title">
         {MESSAGES.BOOKING.CREATE_TITLE}
       </h1>
+      <p className="create-booking-page__subtitle">
+        {MESSAGES.BOOKING.CREATE_DESCRIPTION}
+      </p>
 
       {!vehicle ? (
         <Card>

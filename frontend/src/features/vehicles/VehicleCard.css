@@ -1,25 +1,53 @@
 .vehicle-card {
-  padding: var(--space-4);
+  min-width: 0;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   background: var(--color-surface);
+  box-shadow: var(--shadow-card);
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.vehicle-card:hover,
+.vehicle-card:focus-within {
+  transform: translateY(-2px);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-card-hover);
+}
+
+.vehicle-card__article {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: var(--space-3);
+}
+
+.vehicle-card__content {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: var(--space-3) var(--space-1) var(--space-1);
 }
 
 .vehicle-card__title {
-  margin: 0 0 var(--space-3);
+  margin: 0 0 var(--space-4);
   font-size: var(--font-size-lg);
 }
 
 .vehicle-card__details {
   display: grid;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-4);
+  width: 100%;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
 }
 
 .vehicle-card__details > div {
   display: grid;
-  grid-template-columns: minmax(8rem, 12rem) 1fr;
-  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
 }
 
 .vehicle-card__details dt {
@@ -28,4 +56,42 @@
 
 .vehicle-card__details dd {
   margin: 0;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.vehicle-card__details dd span {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.vehicle-card__actions {
+  display: flex;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.vehicle-card__action {
+  margin-top: auto;
+}
+
+.vehicle-card__actions .vehicle-card__action {
+  flex: 1 1 7rem;
+}
+
+.vehicle-card__delete {
+  color: var(--color-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .vehicle-card {
+    transition: none;
+  }
+
+  .vehicle-card:hover,
+  .vehicle-card:focus-within {
+    transform: none;
+  }
 }

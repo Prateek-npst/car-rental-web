@@ -1,7 +1,24 @@
 export const MESSAGES = Object.freeze({
+  APP: {
+    NAME: 'Car Rental Booking',
+  },
+  NAVIGATION: {
+    VEHICLES: 'Vehicles',
+    BOOKINGS: 'Bookings',
+    MY_BOOKINGS: 'My Bookings',
+    ALL_BOOKINGS: 'All Bookings',
+    PROFILE: 'Profile',
+    ACCOUNT_DETAILS_UNAVAILABLE: 'Account details unavailable',
+  },
   AUTH: {
     INVALID_CREDENTIALS: 'Invalid email or password.',
-    REGISTRATION_FAILED: 'Unable to create your account.',
+    NETWORK_LOGIN_ERROR:
+      "We couldn't sign you in right now. Please check your connection and try again.",
+    REGISTRATION_FAILED: 'Please check your details and try again.',
+    REGISTRATION_DUPLICATE_EMAIL:
+      'An account with this email already exists. Try logging in instead.',
+    REGISTRATION_NETWORK_ERROR:
+      "We couldn't create your account right now. Please try again.",
     LOGIN: 'Log in',
     EMAIL_LABEL: 'Email',
     NAME_LABEL: 'Name',
@@ -12,6 +29,9 @@ export const MESSAGES = Object.freeze({
     EMAIL_TOO_LONG: 'Email is too long.',
     PASSWORD_TOO_SHORT: 'Password is too short.',
     PASSWORD_TOO_LONG: 'Password is too long.',
+    PASSWORD_STRENGTH_TITLE: 'Password requirements',
+    PASSWORD_REQUIREMENTS: 'Password requirements',
+    PASSWORD_STRENGTH_HELP: 'Use a password that includes:',
     PASSWORDS_DO_NOT_MATCH: 'Passwords do not match.',
     REGISTER_PROMPT: "Don't have an account?",
     REGISTER_LINK: 'Register',
@@ -37,9 +57,11 @@ export const MESSAGES = Object.freeze({
 
   VEHICLES: {
     TITLE: 'Find a vehicle',
+    SUBTITLE: 'Choose your dates and find the right ride for your trip.',
     LOCATION_LABEL: 'Location',
     PICKUP_DATE_LABEL: 'Pickup date',
     DROPOFF_DATE_LABEL: 'Drop-off date',
+    SEARCH_FORM_TITLE: 'Search by location and dates',
     SEARCH: 'Search',
     SEARCH_CRITERIA: 'Search criteria',
     DROPOFF_DATE_AFTER_PICKUP: 'Drop-off date must be after pickup date.',
@@ -86,6 +108,11 @@ export const MESSAGES = Object.freeze({
 
   BOOKING: {
     MY_BOOKINGS_TITLE: 'My Bookings',
+    ALL_BOOKINGS_TITLE: 'All Bookings',
+    MY_BOOKINGS_DESCRIPTION:
+      'Review and manage the vehicles you have reserved.',
+    ALL_BOOKINGS_DESCRIPTION:
+      'Review and manage reservations across all users.',
     BOOKING_ID: 'Booking number',
     LOAD_FAILED: 'Unable to load bookings right now. Please try again.',
     NOT_FOUND: 'The booking or vehicle could not be found.',
@@ -101,15 +128,17 @@ export const MESSAGES = Object.freeze({
     UPDATED: 'Booking updated successfully.',
     DELETED: 'Booking cancelled successfully.',
     CREATE_TITLE: 'Create booking',
+    CREATE_DESCRIPTION: 'Review the vehicle and choose your rental dates.',
     VEHICLE_DETAILS: 'Selected vehicle',
     START_DATE_LABEL: 'Start date',
     END_DATE_LABEL: 'End date',
     DATES_TITLE: 'Booking dates',
     DATE_AFTER_START: 'End date must be after start date.',
+    DATE_BEFORE_TODAY: 'Date cannot be before today.',
+    DATE_AFTER_MAX: 'Date cannot be after 31 Dec 2050.',
     MIN_RENTAL_DURATION: 'Rental period is shorter than the minimum duration.',
     NO_VEHICLE_SELECTED: 'Select a vehicle before creating a booking.',
-    CREATE_VALIDATION_FAILED:
-      'Please check the booking details and try again.',
+    CREATE_VALIDATION_FAILED: 'Please check the booking details and try again.',
     VEHICLE_NOT_FOUND:
       'This vehicle could not be found. Please search for another vehicle.',
     BOOKING_CONFLICT:

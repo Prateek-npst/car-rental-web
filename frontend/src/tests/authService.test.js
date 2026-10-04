@@ -57,11 +57,27 @@ describe('authService', () => {
     await expect(login({})).rejects.toThrow(MESSAGES.AUTH.INVALID_CREDENTIALS);
   });
 
-  it('uses the safe registration failure message for registration errors', async () => {
+  it('uses the duplicate-email safe message for 409 registration failures', async () => {
     apiClient.post.mockRejectedValue({ response: { status: 409 } });
 
     await expect(register({})).rejects.toThrow(
-      MESSAGES.AUTH.REGISTRATION_FAILED,
+      MESSAGES.AUTH.REGISTRATION_DUPLICATE_EMAIL,
+    );
+  });
+
+  it('uses the network-safe message for login connection failures', async () => {
+    apiClient.post.mockRejectedValue({ code: 'ERR_NETWORK' });
+
+    await expect(login({})).rejects.toThrow(
+      MESSAGES.AUTH.NETWORK_LOGIN_ERROR,
+    );
+  });
+
+  it('uses the network-safe message for registration connection failures', async () => {
+    apiClient.post.mockRejectedValue({ code: 'ERR_NETWORK' });
+
+    await expect(register({})).rejects.toThrow(
+      MESSAGES.AUTH.REGISTRATION_NETWORK_ERROR,
     );
   });
 });

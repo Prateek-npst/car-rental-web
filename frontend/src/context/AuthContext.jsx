@@ -4,6 +4,11 @@ import * as authService from '@/services/authService.js';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROLES } from '@/constants/roles.js';
 import {
+  getAuthProfile,
+  removeAuthProfile,
+  setAuthProfile,
+} from '@/utils/authProfileStorage.js';
+import {
   getAuthToken,
   removeAuthToken,
   setAuthToken,
@@ -45,10 +50,13 @@ function getUserFromToken(token) {
 
 function getInitialAuthState() {
   const storedToken = getAuthToken();
-  const user = storedToken ? getUserFromToken(storedToken) : null;
+  const tokenUser = storedToken ? getUserFromToken(storedToken) : null;
+  const profile = tokenUser ? getAuthProfile(tokenUser.id) : null;
+  const user = tokenUser ? { ...tokenUser, ...profile } : null;
 
   if (storedToken && !user) {
     removeAuthToken();
+    removeAuthProfile();
   }
 
   return {
@@ -65,6 +73,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const handleTokenExpired = () => {
       removeAuthToken();
+      removeAuthProfile();
       setAuthState({ token: null, user: null, isRestoring: false });
     };
 
@@ -85,6 +94,11 @@ export function AuthProvider({ children }) {
     }
 
     setAuthToken(authToken);
+    if (authUser?.id && authUser?.name && authUser?.email) {
+      setAuthProfile(authUser);
+    } else {
+      removeAuthProfile();
+    }
     setAuthState({
       token: authToken,
       user: authUser,
@@ -96,6 +110,7 @@ export function AuthProvider({ children }) {
 
   function logout() {
     removeAuthToken();
+    removeAuthProfile();
     setAuthState({ token: null, user: null, isRestoring: false });
   }
 
