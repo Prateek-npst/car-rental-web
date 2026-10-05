@@ -55,6 +55,10 @@ function VehicleDetailsPage() {
         <p className="vehicle-details-page__state" role="status">
           {MESSAGES.COMMON.LOADING}
         </p>
+      ) : currentResult.status === 'loading' ? (
+        <p className="vehicle-details-page__state" role="status">
+          {MESSAGES.COMMON.LOADING}
+        </p>
       ) : currentResult.status === 'not-found' ? (
         <section className="vehicle-details-page__state" role="status">
           <p>{MESSAGES.VEHICLES.DETAILS_NOT_FOUND}</p>

@@ -53,4 +53,11 @@ describe('DashboardSidebar', () => {
     expect(screen.getByRole('link', { name: MESSAGES.NAVIGATION.VEHICLES }))
       .not.toBeDisabled();
   });
+
+  it('keeps Vehicles active while viewing vehicle details', () => {
+    renderSidebar(ROLES.USER, '/vehicles/42');
+
+    expect(screen.getByRole('link', { name: MESSAGES.NAVIGATION.VEHICLES }))
+      .toHaveAttribute('aria-current', 'page');
+  });
 });

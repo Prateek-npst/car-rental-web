@@ -16,7 +16,6 @@ export const NAVIGATION_ITEMS = Object.freeze([
     label: MESSAGES.NAVIGATION.VEHICLES,
     route: ROUTES.VEHICLES,
     allowedRoles: AUTHENTICATED_ROLES,
-    end: true,
   }),
   Object.freeze({
     key: 'user-bookings',

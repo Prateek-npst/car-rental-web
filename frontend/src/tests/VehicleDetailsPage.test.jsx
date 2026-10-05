@@ -83,6 +83,20 @@ describe('VehicleDetailsPage', () => {
     ).toHaveAttribute('href', ROUTES.VEHICLES);
   });
 
+  it('retries a failed vehicle request and returns to loading before success', async () => {
+    getVehicleById
+      .mockRejectedValueOnce(new Error('temporary failure'))
+      .mockResolvedValueOnce(vehicle);
+    renderPage();
+
+    fireEvent.click(
+      await screen.findByRole('button', { name: MESSAGES.DASHBOARD.RETRY }),
+    );
+
+    expect(await screen.findByRole('heading', { name: vehicle.model })).toBeVisible();
+    expect(getVehicleById).toHaveBeenCalledTimes(2);
+  });
+
   it('continues to booking with the loaded vehicle', async () => {
     renderPage();
 

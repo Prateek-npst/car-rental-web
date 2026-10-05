@@ -13,6 +13,7 @@ export const MESSAGES = Object.freeze({
     BREADCRUMB_LABEL: 'Breadcrumb',
     OPEN_MENU: 'Open navigation menu',
     CLOSE_MENU: 'Close navigation menu',
+    DISMISS_MENU_OVERLAY: 'Dismiss navigation overlay',
     MAIN_NAV_LABEL: 'Main navigation',
     FOOTER_NAV_LABEL: 'Footer navigation',
     ACCOUNT_DETAILS_UNAVAILABLE: 'Account details unavailable',

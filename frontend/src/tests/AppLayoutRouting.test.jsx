@@ -66,9 +66,31 @@ describe('App route layouts', () => {
     fireEvent.click(menuToggle);
 
     expect(menuToggle).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByRole('link', { name: 'Dashboard' })).toHaveFocus();
     fireEvent.click(screen.getByRole('link', { name: 'Profile' }));
 
     expect(screen.getByRole('heading', { name: 'Profile' })).toBeVisible();
+    expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
+    expect(menuToggle).toHaveFocus();
+  });
+
+  it('closes the drawer from its backdrop and restores toggle focus', () => {
+    authContext.value = {
+      isAuthenticated: true,
+      isRestoring: false,
+      logout: vi.fn(),
+      user: { id: 10, role: ROLES.USER },
+    };
+    window.history.replaceState({}, '', ROUTES.VEHICLES);
+    render(<App />);
+    const menuToggle = screen.getByRole('button', {
+      name: 'Open navigation menu',
+    });
+    fireEvent.click(menuToggle);
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Dismiss navigation overlay' }),
+    );
+
     expect(menuToggle).toHaveAttribute('aria-expanded', 'false');
     expect(menuToggle).toHaveFocus();
   });

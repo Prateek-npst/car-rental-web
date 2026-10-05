@@ -13,6 +13,8 @@ function DashboardLayout() {
       return undefined;
     }
 
+    document.querySelector('#dashboard-sidebar a')?.focus();
+
     function closeOnEscape(event) {
       if (event.key === 'Escape') {
         setIsSidebarOpen(false);
@@ -29,17 +31,20 @@ function DashboardLayout() {
       <DashboardSidebar
         isOpen={isSidebarOpen}
         onNavigate={() => {
-          setIsSidebarOpen(false);
           if (isSidebarOpen) {
+            setIsSidebarOpen(false);
             document.getElementById('dashboard-menu-toggle')?.focus();
           }
         }}
       />
       {isSidebarOpen && (
         <button
-          aria-label={MESSAGES.NAVIGATION.CLOSE_MENU}
+          aria-label={MESSAGES.NAVIGATION.DISMISS_MENU_OVERLAY}
           className="dashboard-layout__backdrop"
-          onClick={() => setIsSidebarOpen(false)}
+          onClick={() => {
+            setIsSidebarOpen(false);
+            document.getElementById('dashboard-menu-toggle')?.focus();
+          }}
           type="button"
         />
       )}
