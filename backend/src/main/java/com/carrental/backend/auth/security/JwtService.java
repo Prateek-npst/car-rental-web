@@ -2,6 +2,7 @@ package com.carrental.backend.auth.security;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 
 import javax.crypto.SecretKey;
 
@@ -38,6 +39,7 @@ public class JwtService {
 		Instant issuedAt = Instant.now();
 		return Jwts.builder()
 				.subject(user.getId().toString())
+				.id(UUID.randomUUID().toString())
 				.claim("role", user.getRole().name())
 				.issuedAt(Date.from(issuedAt))
 				.expiration(Date.from(issuedAt.plusMillis(expirationMillis)))

@@ -29,10 +29,12 @@ import com.carrental.backend.auth.security.AuthenticatedUser;
 import com.carrental.backend.auth.security.JwtProperties;
 import com.carrental.backend.auth.security.JwtService;
 import com.carrental.backend.entity.Booking;
+import com.carrental.backend.entity.RefreshToken;
 import com.carrental.backend.entity.Role;
 import com.carrental.backend.entity.User;
 import com.carrental.backend.entity.Vehicle;
 import com.carrental.backend.repository.BookingRepository;
+import com.carrental.backend.repository.RefreshTokenRepository;
 import com.carrental.backend.repository.UserRepository;
 import com.carrental.backend.repository.VehicleRepository;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -63,6 +65,9 @@ class AuthSecurityIntegrationTests {
 	private BookingRepository bookingRepository;
 
 	@Autowired
+	private RefreshTokenRepository refreshTokenRepository;
+
+	@Autowired
 	private PasswordEncoder passwordEncoder;
 
 	@Autowired
@@ -79,6 +84,7 @@ class AuthSecurityIntegrationTests {
 	void prepareDatabase() {
 		bookingRepository.deleteAll();
 		vehicleRepository.deleteAll();
+		refreshTokenRepository.deleteAll();
 		userRepository.deleteAll();
 		vehicle = vehicleRepository.save(
 				new Vehicle("TEST-101", "Test Compact", new BigDecimal("50.00"), "Central City"));
@@ -113,7 +119,10 @@ class AuthSecurityIntegrationTests {
 		String token = body.get("token").asText();
 		assertThat(token.split("\\.")).hasSize(3);
 		assertThat(body.get("tokenType").asText()).isEqualTo("Bearer");
-		assertThat(response.body()).doesNotContain("password", "$2a$", "$2b$");
+		assertThat(response.body()).doesNotContain("password", "$2a$", "$2b$", "refreshToken");
+		String cookie = response.headers().firstValue("set-cookie").orElseThrow();
+		assertThat(cookie).contains("refresh_token=", "HttpOnly", "SameSite=Strict", "Path=/api/auth");
+		assertThat(cookie).doesNotContain("Secure");
 
 		AuthenticatedUser claims = jwtService.parseToken(token);
 		assertThat(claims.role()).isEqualTo(Role.USER);
@@ -124,6 +133,57 @@ class AuthSecurityIntegrationTests {
 		assertThat(invalid.statusCode()).isEqualTo(401);
 		HttpResponse<String> shortInvalid = post("/auth/login", Map.of("email", "renter@example.com", "password", "x"));
 		assertThat(shortInvalid.statusCode()).isEqualTo(401);
+	}
+
+	@Test
+	void refreshRotatesOpaqueCookieTokenAndRevokesTheReplayedTokenFamily() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		HttpResponse<String> login = post("/auth/login", Map.of("email", "renter@example.com", "password", PASSWORD));
+		String firstRefreshToken = refreshCookieValue(login);
+		String firstAccessToken = objectMapper.readTree(login.body()).get("token").asText();
+		RefreshToken firstStoredToken = refreshTokenRepository.findAll().getFirst();
+
+		assertThat(firstStoredToken.getTokenHash()).isNotEqualTo(firstRefreshToken);
+		assertThat(firstStoredToken.getTokenHash()).hasSize(64);
+
+		HttpResponse<String> rotated = postAuth("/auth/refresh", "refresh", firstRefreshToken);
+		assertThat(rotated.statusCode()).isEqualTo(200);
+		assertThat(objectMapper.readTree(rotated.body()).get("token").asText()).isNotEqualTo(firstAccessToken);
+		String secondRefreshToken = refreshCookieValue(rotated);
+		assertThat(secondRefreshToken).isNotEqualTo(firstRefreshToken);
+		assertThat(refreshTokenRepository.findAll()).hasSize(2);
+		assertThat(refreshTokenRepository.findAll().getFirst().getRevokedAt()).isNotNull();
+
+		assertThat(postAuth("/auth/refresh", "refresh", firstRefreshToken).statusCode()).isEqualTo(401);
+		assertThat(refreshTokenRepository.findAll())
+				.allSatisfy(token -> assertThat(token.getRevokedAt()).isNotNull());
+		assertThat(postAuth("/auth/refresh", "refresh", secondRefreshToken).statusCode()).isEqualTo(401);
+	}
+
+	@Test
+	void logoutRevokesRefreshTokenAndClearsCookie() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		HttpResponse<String> login = post("/auth/login", Map.of("email", "renter@example.com", "password", PASSWORD));
+		String refreshToken = refreshCookieValue(login);
+
+		HttpResponse<String> logout = postAuth("/auth/logout", "logout", refreshToken);
+
+		assertThat(logout.statusCode()).isEqualTo(204);
+		assertThat(logout.headers().firstValue("set-cookie").orElseThrow())
+				.contains("refresh_token=", "Max-Age=0", "HttpOnly", "SameSite=Strict");
+		assertThat(refreshTokenRepository.findAll().getFirst().getRevokedAt()).isNotNull();
+		assertThat(postAuth("/auth/refresh", "refresh", refreshToken).statusCode()).isEqualTo(401);
+	}
+
+	@Test
+	void refreshAndLogoutRequireTheExpectedCustomActionHeader() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		HttpResponse<String> login = post("/auth/login", Map.of("email", "renter@example.com", "password", PASSWORD));
+		String refreshToken = refreshCookieValue(login);
+
+		assertThat(postAuth("/auth/refresh", "logout", refreshToken).statusCode()).isEqualTo(403);
+		assertThat(postAuth("/auth/logout", "refresh", refreshToken).statusCode()).isEqualTo(403);
+		assertThat(refreshTokenRepository.findAll().getFirst().getRevokedAt()).isNull();
 	}
 
 	@Test
@@ -144,6 +204,18 @@ class AuthSecurityIntegrationTests {
 		HttpResponse<String> response = get("/vehicles", token);
 		assertThat(response.statusCode()).isEqualTo(200);
 		assertThat(response.body()).contains("TEST-101");
+	}
+
+	@Test
+	void vehicleDetailsRequireAuthenticationAndReturnNotFoundWhenMissing() throws Exception {
+		post("/auth/register", registerBody("Renter", "renter@example.com", PASSWORD, null));
+		String token = loginToken("renter@example.com", PASSWORD);
+
+		assertThat(get("/vehicles/" + vehicle.getId(), null).statusCode()).isEqualTo(401);
+		HttpResponse<String> details = get("/vehicles/" + vehicle.getId(), token);
+		assertThat(details.statusCode()).isEqualTo(200);
+		assertThat(details.body()).contains("TEST-101", "Test Compact", "Central City");
+		assertThat(get("/vehicles/999999", token).statusCode()).isEqualTo(404);
 	}
 
 	@Test
@@ -497,10 +569,26 @@ class AuthSecurityIntegrationTests {
 		HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url(path)))
 				.header("Content-Type", "application/json")
 				.POST(HttpRequest.BodyPublishers.ofString(objectMapper.writeValueAsString(body)));
+		if (path.equals("/auth/login")) {
+			request.header("X-Auth-Action", "login");
+		}
 		if (token != null) {
 			request.header("Authorization", "Bearer " + token);
 		}
 		return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+	}
+
+	private HttpResponse<String> postAuth(String path, String action, String refreshToken) throws Exception {
+		HttpRequest.Builder request = HttpRequest.newBuilder(URI.create(url(path)))
+				.header("X-Auth-Action", action)
+				.header("Cookie", "refresh_token=" + refreshToken)
+				.POST(HttpRequest.BodyPublishers.noBody());
+		return httpClient.send(request.build(), HttpResponse.BodyHandlers.ofString());
+	}
+
+	private String refreshCookieValue(HttpResponse<String> response) {
+		String cookie = response.headers().firstValue("set-cookie").orElseThrow();
+		return cookie.substring("refresh_token=".length(), cookie.indexOf(';'));
 	}
 
 	private HttpResponse<String> get(String path, String token) throws Exception {

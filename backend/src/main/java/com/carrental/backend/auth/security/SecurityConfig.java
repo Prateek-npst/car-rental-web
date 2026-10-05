@@ -5,8 +5,6 @@ import java.util.List;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -16,6 +14,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+
+import com.carrental.backend.constants.ApiPaths;
+import com.carrental.backend.entity.Role;
 
 @Configuration
 @EnableMethodSecurity
@@ -45,7 +47,8 @@ public class SecurityConfig {
 							"http://localhost:5174",
 							"http://127.0.0.1:5174"));
 					configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-					configuration.setAllowedHeaders(List.of("Authorization", "Content-Type"));
+					configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "X-Auth-Action"));
+					configuration.setAllowCredentials(true);
 					return configuration;
 				}))
 				.csrf(AbstractHttpConfigurer::disable)
@@ -54,13 +57,14 @@ public class SecurityConfig {
 						.authenticationEntryPoint(securityErrorHandler)
 						.accessDeniedHandler(securityErrorHandler))
 				.authorizeHttpRequests(authorize -> authorize
-						.requestMatchers(HttpMethod.POST, "/auth/register", "/auth/login").permitAll()
-						.requestMatchers(HttpMethod.POST, "/vehicles").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.PUT, "/vehicles/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.DELETE, "/vehicles/**").hasRole("ADMIN")
-						.requestMatchers(HttpMethod.GET, "/vehicles", "/vehicles/search").authenticated()
+						.requestMatchers(HttpMethod.POST, ApiPaths.AUTH_REGISTER_FULL, ApiPaths.AUTH_LOGIN_FULL,
+								ApiPaths.AUTH_REFRESH_FULL, ApiPaths.AUTH_LOGOUT_FULL).permitAll()
+						.requestMatchers(HttpMethod.POST, ApiPaths.VEHICLES_BASE).hasRole(Role.ADMIN.name())
+						.requestMatchers(HttpMethod.PUT, ApiPaths.VEHICLES_BASE + "/**").hasRole(Role.ADMIN.name())
+						.requestMatchers(HttpMethod.DELETE, ApiPaths.VEHICLES_BASE + "/**").hasRole(Role.ADMIN.name())
+						.requestMatchers(HttpMethod.GET, ApiPaths.VEHICLES_BASE, ApiPaths.VEHICLE_SEARCH_FULL).authenticated()
 						//we will use this for testing purposes, so we can access the h2 console without authentication
-						.requestMatchers("/h2-console", "/h2-console/**").permitAll()
+						.requestMatchers(ApiPaths.H2_CONSOLE, ApiPaths.H2_CONSOLE_ALL).permitAll()
 						.anyRequest().authenticated())
 				.headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
 				.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

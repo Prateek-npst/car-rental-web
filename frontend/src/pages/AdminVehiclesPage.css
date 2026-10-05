@@ -4,24 +4,6 @@
   padding-block: var(--space-8);
 }
 
-.admin-vehicles-page__heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.admin-vehicles-page__title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-}
-
-.admin-vehicles-page__subtitle {
-  margin: var(--space-2) 0 0;
-  color: var(--color-text-muted);
-}
-
 .admin-vehicles-page__list {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
@@ -52,9 +34,5 @@
 @media (max-width: 40rem) {
   .admin-vehicles-page {
     padding-block: var(--space-6);
-  }
-
-  .admin-vehicles-page__heading {
-    align-items: flex-start;
   }
 }

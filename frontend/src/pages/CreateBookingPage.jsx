@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Card from '@/components/ui/Card.jsx';
+import PageHeading from '@/components/ui/PageHeading.jsx';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import BookingForm from '@/features/bookings/BookingForm.jsx';
@@ -41,12 +42,14 @@ function CreateBookingPage() {
 
   return (
     <div className="create-booking-page">
-      <h1 className="create-booking-page__title">
-        {MESSAGES.BOOKING.CREATE_TITLE}
-      </h1>
-      <p className="create-booking-page__subtitle">
-        {MESSAGES.BOOKING.CREATE_DESCRIPTION}
-      </p>
+      <PageHeading
+        breadcrumbs={[
+          { label: MESSAGES.NAVIGATION.VEHICLES, to: ROUTES.VEHICLES },
+          { label: MESSAGES.BOOKING.CREATE_TITLE },
+        ]}
+        description={MESSAGES.BOOKING.CREATE_DESCRIPTION}
+        title={MESSAGES.BOOKING.CREATE_TITLE}
+      />
 
       {!vehicle ? (
         <Card>

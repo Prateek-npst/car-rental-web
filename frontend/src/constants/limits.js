@@ -1,7 +1,7 @@
 export const LIMITS = Object.freeze({
   AUTH: {
-    NAME_MAX_LENGTH: 100,
-    EMAIL_MAX_LENGTH: 254,
+    NAME_MAX_LENGTH: 50,
+    EMAIL_MAX_LENGTH: 50,
     PASSWORD_MIN_LENGTH: 8,
     PASSWORD_MAX_LENGTH: 128,
     PASSWORD_PATTERN: /(?=.*[A-Z])(?=.*[a-z])(?=.*\d)(?=.*[^A-Za-z0-9])/,
@@ -31,9 +31,9 @@ export const LIMITS = Object.freeze({
   },
 
   VEHICLE: {
-    REG_NUMBER_MAX_LENGTH: 20,
-    MODEL_MAX_LENGTH: 100,
-    LOCATION_MAX_LENGTH: 100,
+    REG_NUMBER_MAX_LENGTH: 12,
+    MODEL_MAX_LENGTH: 50,
+    LOCATION_MAX_LENGTH: 50,
     DAILY_RATE_MIN: 1,
     DAILY_RATE_MAX: 100000,
   },

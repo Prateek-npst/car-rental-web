@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
+import { Link, useNavigate } from 'react-router-dom';
 import Button from '@/components/ui/Button.jsx';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
@@ -19,13 +20,12 @@ function getInitials(name) {
   return initials || 'U';
 }
 
-function Header() {
+function Header({ isSidebarOpen = false, onToggleSidebar }) {
   const navigate = useNavigate();
   const { isAuthenticated, logout, user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const profileRef = useRef(null);
   const profileToggleRef = useRef(null);
-  const isAdmin = user?.role === ROLES.ADMIN;
   const profileName = user?.name || MESSAGES.NAVIGATION.PROFILE;
 
   function closeProfile() {
@@ -65,14 +65,10 @@ function Header() {
     navigate(ROUTES.LOGIN, { replace: true });
   }
 
-  function navLinkClass({ isActive }) {
-    return `header__link${isActive ? ' header__link--active' : ''}`;
-  }
-
   return (
     <header className="header">
       <div className="header__content">
-        <Link className="header__brand" onClick={closeProfile} to={ROUTES.VEHICLES}>
+        <Link className="header__brand" onClick={closeProfile} to={ROUTES.DASHBOARD}>
           <span aria-hidden="true" className="header__brand-mark">
             CR
           </span>
@@ -80,24 +76,28 @@ function Header() {
         </Link>
 
         <div className="header__tools">
-          {isAuthenticated && (
-            <nav aria-label="Main navigation" className="header__nav">
-              <NavLink className={navLinkClass} end onClick={closeProfile} to={ROUTES.VEHICLES}>
-                {MESSAGES.NAVIGATION.VEHICLES}
-              </NavLink>
-              <NavLink className={navLinkClass} onClick={closeProfile} to={ROUTES.BOOKINGS}>
-                {isAdmin
-                  ? MESSAGES.NAVIGATION.ALL_BOOKINGS
-                  : MESSAGES.NAVIGATION.MY_BOOKINGS}
-              </NavLink>
-              {isAdmin && (
-                <NavLink className={navLinkClass} onClick={closeProfile} to={ROUTES.ADMIN_VEHICLES}>
-                  {MESSAGES.VEHICLES.ADMIN_NAV}
-                </NavLink>
-              )}
-            </nav>
+          {isAuthenticated && onToggleSidebar && (
+            <Button
+              aria-controls="dashboard-sidebar"
+              aria-expanded={isSidebarOpen}
+              aria-label={
+                isSidebarOpen
+                  ? MESSAGES.NAVIGATION.CLOSE_MENU
+                  : MESSAGES.NAVIGATION.OPEN_MENU
+              }
+              className="header__menu-toggle"
+              id="dashboard-menu-toggle"
+              onClick={onToggleSidebar}
+              type="button"
+              variant="secondary"
+            >
+              <span aria-hidden="true" className="header__menu-icon">
+                <span />
+                <span />
+                <span />
+              </span>
+            </Button>
           )}
-
           {isAuthenticated && (
             <div className="header__profile" ref={profileRef}>
               <Button
@@ -154,5 +154,10 @@ function Header() {
     </header>
   );
 }
+
+Header.propTypes = {
+  isSidebarOpen: PropTypes.bool,
+  onToggleSidebar: PropTypes.func,
+};
 
 export default Header;

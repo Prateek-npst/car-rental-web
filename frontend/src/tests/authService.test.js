@@ -9,11 +9,14 @@ vi.mock('@/config/api.js', () => ({
     AUTH: {
       LOGIN: '/auth/login',
       REGISTER: '/auth/register',
+      LOGOUT: '/auth/logout',
     },
   },
   apiClient: {
     post: vi.fn(),
   },
+  refreshAuthSession: vi.fn(),
+  logoutAuthSession: vi.fn(),
 }));
 
 describe('authService', () => {
@@ -35,6 +38,7 @@ describe('authService', () => {
     expect(apiClient.post).toHaveBeenCalledWith(
       API_CONFIG.AUTH.LOGIN,
       credentials,
+      { headers: { 'X-Auth-Action': 'login' } },
     );
   });
 
@@ -79,5 +83,18 @@ describe('authService', () => {
     await expect(register({})).rejects.toThrow(
       MESSAGES.AUTH.REGISTRATION_NETWORK_ERROR,
     );
+  });
+
+  it('delegates refresh and logout to the cookie-backed auth session client', async () => {
+    const { logoutAuthSession, refreshAuthSession } = await import('@/config/api.js');
+    const session = { token: 'fresh-access-token' };
+    refreshAuthSession.mockResolvedValue(session);
+    logoutAuthSession.mockResolvedValue(undefined);
+    const { logout, refresh } = await import('@/services/authService.js');
+
+    await expect(refresh()).resolves.toBe(session);
+    await expect(logout()).resolves.toBeUndefined();
+    expect(refreshAuthSession).toHaveBeenCalledOnce();
+    expect(logoutAuthSession).toHaveBeenCalledOnce();
   });
 });

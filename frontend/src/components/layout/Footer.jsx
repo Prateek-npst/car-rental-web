@@ -8,7 +8,7 @@ function Footer() {
     <footer className="footer">
       <div className="footer__content">
         <p className="footer__brand">{MESSAGES.APP.NAME}</p>
-        <nav aria-label="Footer navigation" className="footer__nav">
+        <nav aria-label={MESSAGES.NAVIGATION.FOOTER_NAV_LABEL} className="footer__nav">
           <Link to={ROUTES.VEHICLES}>{MESSAGES.NAVIGATION.VEHICLES}</Link>
           <Link to={ROUTES.BOOKINGS}>{MESSAGES.NAVIGATION.BOOKINGS}</Link>
         </nav>

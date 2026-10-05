@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button.jsx';
 import Card from '@/components/ui/Card.jsx';
+import PageHeading from '@/components/ui/PageHeading.jsx';
 import { MESSAGES } from '@/constants/messages.js';
 import VehicleCard from '@/features/vehicles/VehicleCard.jsx';
 import VehicleForm from '@/features/vehicles/VehicleForm.jsx';
@@ -114,19 +115,16 @@ function AdminVehiclesPage() {
 
   return (
     <div className="admin-vehicles-page">
-      <div className="admin-vehicles-page__heading">
-        <div>
-          <h1 className="admin-vehicles-page__title">
-            {MESSAGES.VEHICLES.ADMIN_TITLE}
-          </h1>
-          <p className="admin-vehicles-page__subtitle">
-            Add vehicles to the fleet or update their details.
-          </p>
-        </div>
-        <Button onClick={startCreate} type="button">
-          {MESSAGES.VEHICLES.ADMIN_ADD}
-        </Button>
-      </div>
+      <PageHeading
+        actions={
+          <Button onClick={startCreate} type="button">
+            {MESSAGES.VEHICLES.ADMIN_ADD}
+          </Button>
+        }
+        breadcrumbs={[{ label: MESSAGES.VEHICLES.ADMIN_TITLE }]}
+        description={MESSAGES.VEHICLES.ADMIN_DESCRIPTION}
+        title={MESSAGES.VEHICLES.ADMIN_TITLE}
+      />
 
       {actionError && <p role="alert">{actionError}</p>}
       {successMessage && <p role="status">{successMessage}</p>}

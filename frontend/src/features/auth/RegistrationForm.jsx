@@ -35,7 +35,7 @@ const registrationSchema = z
       .refine(
         (value) => LIMITS.AUTH.PASSWORD_PATTERN.test(value),
         {
-          message: 'Password must include uppercase, lowercase, number, and special character.',
+          message: MESSAGES.AUTH.PASSWORD_COMPLEXITY,
         },
       ),
     confirmPassword: z.string().min(1, MESSAGES.COMMON.REQUIRED_FIELD),

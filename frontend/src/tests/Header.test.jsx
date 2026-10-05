@@ -15,11 +15,12 @@ vi.mock('@/context/AuthContext.jsx', () => ({
   useAuth: () => authContext.value,
 }));
 
-function renderHeader(initialEntry = ROUTES.BOOKINGS) {
+function renderHeader(initialEntry = ROUTES.DASHBOARD) {
   return render(
     <MemoryRouter initialEntries={[initialEntry]}>
       <Header />
       <Routes>
+        <Route path={ROUTES.DASHBOARD} element={<h1>Dashboard page</h1>} />
         <Route path={ROUTES.VEHICLES} element={<h1>Vehicles page</h1>} />
         <Route path={ROUTES.BOOKINGS} element={<h1>Bookings page</h1>} />
         <Route path={ROUTES.ADMIN_VEHICLES} element={<h1>Admin vehicles</h1>} />
@@ -44,18 +45,9 @@ describe('Header', () => {
     };
   });
 
-  it('shows authenticated navigation and a logout control', () => {
-    renderHeader(ROUTES.BOOKINGS);
+  it('shows the existing authenticated profile and logout controls in the topbar', () => {
+    renderHeader();
 
-    expect(
-      screen.getByRole('link', { name: MESSAGES.NAVIGATION.VEHICLES }),
-    ).toHaveAttribute('href', ROUTES.VEHICLES);
-    expect(
-      screen.getByRole('link', { name: MESSAGES.NAVIGATION.MY_BOOKINGS }),
-    ).toHaveAttribute('href', ROUTES.BOOKINGS);
-    expect(
-      screen.getByRole('link', { name: MESSAGES.NAVIGATION.MY_BOOKINGS }),
-    ).toHaveAttribute('aria-current', 'page');
     fireEvent.click(
       screen.getByRole('button', { name: /Prateek Singh, Profile/ }),
     );
@@ -64,13 +56,13 @@ describe('Header', () => {
     ).toBeVisible();
   });
 
-  it('closes the profile menu when the user navigates via header links', () => {
-    renderHeader(ROUTES.BOOKINGS);
+  it('closes the profile menu when the user follows the brand link', () => {
+    renderHeader();
 
     fireEvent.click(screen.getByRole('button', { name: /Prateek Singh, Profile/ }));
     expect(screen.getByRole('button', { name: MESSAGES.AUTH.LOGOUT })).toBeVisible();
 
-    fireEvent.click(screen.getByRole('link', { name: MESSAGES.NAVIGATION.VEHICLES }));
+    fireEvent.click(screen.getByRole('link', { name: MESSAGES.APP.NAME }));
 
     expect(screen.queryByRole('button', { name: MESSAGES.AUTH.LOGOUT })).not.toBeInTheDocument();
   });
@@ -87,51 +79,12 @@ describe('Header', () => {
     expect(screen.getByRole('heading', { name: 'Login page' })).toBeVisible();
   });
 
-  it('hides authenticated navigation when signed out', () => {
+  it('hides the profile and logout controls when signed out', () => {
     authContext.value = { isAuthenticated: false, logout };
     renderHeader();
 
     expect(
-      screen.queryByRole('link', { name: MESSAGES.NAVIGATION.VEHICLES }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: MESSAGES.NAVIGATION.MY_BOOKINGS }),
-    ).not.toBeInTheDocument();
-    expect(
       screen.queryByRole('button', { name: MESSAGES.AUTH.LOGOUT }),
-    ).not.toBeInTheDocument();
-  });
-
-  it('shows vehicle management navigation only to ADMIN users', () => {
-    const { unmount } = renderHeader();
-    expect(
-      screen.queryByRole('link', { name: MESSAGES.VEHICLES.ADMIN_NAV }),
-    ).not.toBeInTheDocument();
-    unmount();
-
-    authContext.value = {
-      isAuthenticated: true,
-      logout,
-      user: {
-        id: 1,
-        name: 'A User',
-        email: 'admin@example.com',
-        role: ROLES.ADMIN,
-      },
-    };
-    renderHeader(ROUTES.ADMIN_VEHICLES);
-
-    expect(
-      screen.getByRole('link', { name: MESSAGES.VEHICLES.ADMIN_NAV }),
-    ).toHaveAttribute('href', ROUTES.ADMIN_VEHICLES);
-    expect(
-      screen.getByRole('link', { name: MESSAGES.VEHICLES.ADMIN_NAV }),
-    ).toHaveAttribute('aria-current', 'page');
-    expect(
-      screen.getByRole('link', { name: MESSAGES.NAVIGATION.ALL_BOOKINGS }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole('link', { name: MESSAGES.NAVIGATION.MY_BOOKINGS }),
     ).not.toBeInTheDocument();
   });
 

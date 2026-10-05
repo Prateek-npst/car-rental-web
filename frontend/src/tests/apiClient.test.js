@@ -49,7 +49,7 @@ describe('apiClient', () => {
     expect(config.headers.Authorization).toBeUndefined();
   });
 
-  it('clears the stored token on 401 and leaves it intact on 403', async () => {
+  it('clears the stored token on an unrecoverable 401 and leaves it intact on 403', async () => {
     vi.stubEnv('VITE_API_BASE_URL', 'http://localhost:8081/api');
     const { apiClient } = await import('@/config/api.js');
     const responseHandler = apiClient.interceptors.response.handlers.find(
@@ -58,7 +58,10 @@ describe('apiClient', () => {
 
     setAuthToken('jwt-token');
     await expect(
-      responseHandler.rejected({ response: { status: 401 } }),
+      responseHandler.rejected({
+        config: { url: '/bookings', headers: {} },
+        response: { status: 401 },
+      }),
     ).rejects.toMatchObject({ response: { status: 401 } });
     expect(getAuthToken()).toBeNull();
 

@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROLES } from '@/constants/roles.js';
+import { canAccess } from '@/constants/permissions.js';
 import { ROUTES } from '@/constants/routes.js';
 import { useAuth } from '@/context/AuthContext.jsx';
 import ForbiddenPage from '@/pages/ForbiddenPage.jsx';
@@ -18,7 +19,7 @@ function RoleRoute({ allowedRoles, children }) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />;
   }
 
-  if (!allowedRoles.includes(user?.role)) {
+  if (!canAccess(user, allowedRoles)) {
     return <ForbiddenPage />;
   }
 

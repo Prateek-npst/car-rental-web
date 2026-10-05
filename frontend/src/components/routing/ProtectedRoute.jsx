@@ -14,7 +14,7 @@ function ProtectedRoute({ children, guestOnly = false }) {
 
   if (guestOnly) {
     return isAuthenticated ? (
-      <Navigate to={ROUTES.VEHICLES} replace />
+      <Navigate to={ROUTES.DASHBOARD} replace />
     ) : (
       children || <Outlet />
     );

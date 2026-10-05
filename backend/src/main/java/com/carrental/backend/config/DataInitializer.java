@@ -28,7 +28,7 @@ public class DataInitializer {
 			PasswordEncoder passwordEncoder) {
 		return args -> {
 			if (userRepository.count() == 0) {
-				userRepository.save(new User("Renter", "renter@example.com", passwordEncoder.encode("Password@123"), Role.USER));
+				userRepository.save(new User("Renter", "Renter@example.com", passwordEncoder.encode("Password@123"), Role.USER));
 			}
 
 			if (vehicleRepository.count() == 0) {
@@ -40,7 +40,7 @@ public class DataInitializer {
 						new Vehicle("NH-303", "Trail SUV", new BigDecimal("110.00"), "North Harbor"));
 
 				if (bookingRepository.count() == 0) {
-					User renter = userRepository.findByEmail("renter@example.com").orElseThrow();
+					User renter = userRepository.findByEmail("Renter@example.com").orElseThrow();
 					bookingRepository.save(new Booking(renter, cityCompact, LocalDate.of(2026, 10, 10), LocalDate.of(2026, 10, 15)));
 					bookingRepository.save(new Booking(renter, citySedan, LocalDate.of(2026, 10, 18), LocalDate.of(2026, 10, 20)));
 				}

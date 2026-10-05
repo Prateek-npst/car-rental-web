@@ -4,28 +4,6 @@
   padding-block: var(--space-8);
 }
 
-.vehicles-page__heading {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.vehicles-page__eyebrow {
-  margin: 0;
-  color: var(--color-primary);
-  font-size: var(--font-size-sm);
-  font-weight: 700;
-}
-
-.vehicles-page__subtitle {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-.vehicles-page__title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-}
-
 .vehicles-page__prompt {
   margin: 0;
   padding: var(--space-5);

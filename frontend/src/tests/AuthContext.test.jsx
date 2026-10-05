@@ -1,4 +1,4 @@
-import { act, renderHook } from '@testing-library/react';
+import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AuthProvider, useAuth } from '@/context/AuthContext.jsx';
 import { ROLES } from '@/constants/roles.js';
@@ -17,6 +17,8 @@ import {
 vi.mock('@/services/authService.js', () => ({
   login: vi.fn(),
   register: vi.fn(),
+  refresh: vi.fn(),
+  logout: vi.fn(),
 }));
 
 function createToken(role = ROLES.USER, subject = '7') {
@@ -39,6 +41,8 @@ describe('AuthContext', () => {
     removeAuthToken();
     removeAuthProfile();
     vi.resetAllMocks();
+    authService.refresh.mockResolvedValue(null);
+    authService.logout.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -54,7 +58,7 @@ describe('AuthContext', () => {
     expect(result.current.token).toBeNull();
     expect(result.current.user).toBeNull();
     expect(result.current.isAuthenticated).toBe(false);
-    expect(result.current.isRestoring).toBe(false);
+    expect(result.current.isRestoring).toBe(true);
   });
 
   it('starts authenticated when a token is stored', () => {
@@ -118,6 +122,27 @@ describe('AuthContext', () => {
     });
   });
 
+  it('restores an expired access session from the HttpOnly refresh cookie', async () => {
+    const user = {
+      id: 7,
+      name: 'Renter Name',
+      email: 'renter@example.com',
+      role: ROLES.USER,
+    };
+    authService.refresh.mockResolvedValue({ token: createToken(ROLES.USER), user });
+
+    const { result } = renderHook(() => useAuth(), {
+      wrapper: AuthProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.isAuthenticated).toBe(true);
+    });
+    expect(result.current.user).toEqual(user);
+    expect(getAuthToken()).toBe(result.current.token);
+    expect(authService.refresh).toHaveBeenCalledOnce();
+  });
+
   it('clears the token and user when the app receives an expired-token event', () => {
     setAuthToken(createToken());
 
@@ -149,6 +174,7 @@ describe('AuthContext', () => {
     expect(result.current.isAuthenticated).toBe(false);
     expect(getAuthToken()).toBeNull();
     expect(getAuthProfile(7)).toBeNull();
+    expect(authService.logout).toHaveBeenCalledOnce();
   });
 
   it('returns the registration response from the auth service', async () => {

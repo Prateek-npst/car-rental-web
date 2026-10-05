@@ -17,11 +17,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.carrental.backend.auth.security.AuthenticatedUser;
+import com.carrental.backend.constants.ApiPaths;
 import com.carrental.backend.entity.Booking;
 import com.carrental.backend.entity.Role;
 import com.carrental.backend.entity.User;
 import com.carrental.backend.entity.Vehicle;
-import com.carrental.backend.auth.security.AuthenticatedUser;
 import com.carrental.backend.repository.BookingRepository;
 import com.carrental.backend.repository.UserRepository;
 import com.carrental.backend.repository.VehicleRepository;
@@ -30,7 +31,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 
 @RestController
-@RequestMapping("/bookings")
+@RequestMapping(ApiPaths.BOOKINGS_BASE)
 public class BookingController {
 	private final BookingRepository bookingRepository;
 	private final UserRepository userRepository;

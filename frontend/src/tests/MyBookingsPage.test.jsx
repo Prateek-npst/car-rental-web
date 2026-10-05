@@ -107,6 +107,33 @@ describe('MyBookingsPage', () => {
     expect(screen.getByText(booking.endDate)).toBeInTheDocument();
   });
 
+  it('hides edit and cancel actions when a booking is not owned by the user', async () => {
+    getBookings.mockResolvedValue([{ ...booking, userId: 99 }]);
+    renderPage(ROLES.USER);
+
+    expect(
+      await screen.findByRole('heading', { name: booking.vehicle.model }),
+    ).toBeVisible();
+    expect(
+      screen.queryByRole('button', { name: MESSAGES.BOOKING.EDIT }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: MESSAGES.BOOKING.CANCEL_BOOKING }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('allows admins to manage bookings owned by other users', async () => {
+    getBookings.mockResolvedValue([{ ...booking, userId: 99 }]);
+    renderPage(ROLES.ADMIN);
+
+    expect(
+      await screen.findByRole('button', { name: MESSAGES.BOOKING.EDIT }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: MESSAGES.BOOKING.CANCEL_BOOKING }),
+    ).toBeVisible();
+  });
+
   it('shows an empty state when the backend returns no bookings', async () => {
     getBookings.mockResolvedValue([]);
     renderPage();

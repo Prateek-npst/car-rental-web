@@ -3,11 +3,18 @@ export const MESSAGES = Object.freeze({
     NAME: 'Car Rental Booking',
   },
   NAVIGATION: {
+    DASHBOARD: 'Dashboard',
+    WORKSPACE: 'Workspace',
     VEHICLES: 'Vehicles',
     BOOKINGS: 'Bookings',
     MY_BOOKINGS: 'My Bookings',
     ALL_BOOKINGS: 'All Bookings',
     PROFILE: 'Profile',
+    BREADCRUMB_LABEL: 'Breadcrumb',
+    OPEN_MENU: 'Open navigation menu',
+    CLOSE_MENU: 'Close navigation menu',
+    MAIN_NAV_LABEL: 'Main navigation',
+    FOOTER_NAV_LABEL: 'Footer navigation',
     ACCOUNT_DETAILS_UNAVAILABLE: 'Account details unavailable',
   },
   AUTH: {
@@ -29,6 +36,7 @@ export const MESSAGES = Object.freeze({
     EMAIL_TOO_LONG: 'Email is too long.',
     PASSWORD_TOO_SHORT: 'Password is too short.',
     PASSWORD_TOO_LONG: 'Password is too long.',
+    PASSWORD_COMPLEXITY: 'Password must include uppercase, lowercase, number, and special character.',
     PASSWORD_STRENGTH_TITLE: 'Password requirements',
     PASSWORD_REQUIREMENTS: 'Password requirements',
     PASSWORD_STRENGTH_HELP: 'Use a password that includes:',
@@ -42,6 +50,20 @@ export const MESSAGES = Object.freeze({
     FORBIDDEN_TITLE: '403 - Forbidden',
     FORBIDDEN_MESSAGE: 'You do not have permission to access this page.',
     BACK_TO_VEHICLES: 'Back to vehicles',
+  },
+
+  DASHBOARD: {
+    TITLE: 'Dashboard',
+    DESCRIPTION: 'A quick view of your rental activity.',
+    SUMMARY: 'Booking summary',
+    BOOKING_COUNT: 'Total bookings',
+    RECENT_TITLE: 'Recent bookings',
+    EMPTY_TITLE: 'No bookings yet',
+    EMPTY_DESCRIPTION: 'Search available vehicles to plan your first rental.',
+    LOAD_FAILED: 'Unable to load your dashboard right now. Please try again.',
+    RETRY: 'Retry',
+    FIND_VEHICLE: 'Find a vehicle',
+    VIEW_BOOKINGS: 'View all bookings',
   },
 
   COMMON: {
@@ -69,6 +91,7 @@ export const MESSAGES = Object.freeze({
     NO_AVAILABLE_VEHICLES: 'No available vehicles match this search.',
     SEARCH_FAILED: 'Unable to search vehicles right now. Please try again.',
     ADMIN_TITLE: 'Manage vehicles',
+    ADMIN_DESCRIPTION: 'Add vehicles to the fleet or update their details.',
     ADMIN_NAV: 'Manage Vehicles',
     ADMIN_LOAD_FAILED: 'Unable to load vehicles right now. Please try again.',
     ADMIN_CREATE_FAILED: 'Unable to create this vehicle. Please try again.',
@@ -103,7 +126,20 @@ export const MESSAGES = Object.freeze({
     MODEL_LABEL: 'Model',
     REG_NUMBER_LABEL: 'Registration number',
     DAILY_RATE_LABEL: 'Daily rate',
-    SELECT_VEHICLE: 'Select vehicle',
+    DETAILS_TITLE: 'Vehicle Details',
+    VIEW_DETAILS: 'View details',
+    CONTINUE_TO_BOOKING: 'Continue to booking',
+    DETAILS_FAILED: 'Unable to load this vehicle right now. Please try again.',
+    DETAILS_NOT_FOUND: 'This vehicle could not be found.',
+    BACK_TO_VEHICLES: 'Back to vehicles',
+  },
+
+  PROFILE: {
+    TITLE: 'Profile',
+    NAME: 'Name',
+    EMAIL: 'Email',
+    ROLE: 'Role',
+    VALUE_UNAVAILABLE: 'Not available',
   },
 
   BOOKING: {

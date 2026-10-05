@@ -1,25 +1,6 @@
 import { API_CONFIG, apiClient } from '@/config/api.js';
 import { MESSAGES } from '@/constants/messages.js';
-
-function getVehicleErrorMessage(status, fallbackMessage) {
-  if (status === 400) {
-    return MESSAGES.VEHICLES.INVALID_DATA;
-  }
-
-  if (status === 404) {
-    return MESSAGES.VEHICLES.NOT_FOUND;
-  }
-
-  if (status === 409) {
-    return MESSAGES.VEHICLES.DUPLICATE_REG_NUMBER;
-  }
-
-  if (status === 403) {
-    return MESSAGES.VEHICLES.PERMISSION_DENIED;
-  }
-
-  return fallbackMessage;
-}
+import { resolveApiError } from '@/utils/apiError.js';
 
 async function performVehicleRequest(request, fallbackMessage) {
   try {
@@ -27,7 +8,12 @@ async function performVehicleRequest(request, fallbackMessage) {
     return response.data;
   } catch (error) {
     throw new Error(
-      getVehicleErrorMessage(error?.response?.status, fallbackMessage),
+      resolveApiError(error, fallbackMessage, {
+        400: MESSAGES.VEHICLES.INVALID_DATA,
+        403: MESSAGES.VEHICLES.PERMISSION_DENIED,
+        404: MESSAGES.VEHICLES.NOT_FOUND,
+        409: MESSAGES.VEHICLES.DUPLICATE_REG_NUMBER,
+      }),
       { cause: error },
     );
   }
@@ -51,6 +37,13 @@ export function getVehicles() {
   return performVehicleRequest(
     () => apiClient.get(API_CONFIG.VEHICLES.BASE),
     MESSAGES.VEHICLES.ADMIN_LOAD_FAILED,
+  );
+}
+
+export function getVehicleById(vehicleId) {
+  return performVehicleRequest(
+    () => apiClient.get(`${API_CONFIG.VEHICLES.BASE}/${vehicleId}`),
+    MESSAGES.VEHICLES.DETAILS_FAILED,
   );
 }
 

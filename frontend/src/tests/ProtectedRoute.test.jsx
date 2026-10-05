@@ -32,6 +32,7 @@ function GuardedRoutes() {
         <Route path={ROUTES.REGISTER} element={<h1>Register screen</h1>} />
       </Route>
       <Route element={<ProtectedRoute />}>
+        <Route path={ROUTES.DASHBOARD} element={<h1>Dashboard screen</h1>} />
         <Route path={ROUTES.VEHICLES} element={<h1>Vehicles screen</h1>} />
         <Route path={ROUTES.BOOKINGS} element={<h1>Bookings screen</h1>} />
       </Route>
@@ -120,7 +121,7 @@ describe('ProtectedRoute and RoleRoute', () => {
       setAuthState({ isAuthenticated: true });
       renderGuardedRoutes(path);
 
-      expect(screen.getByRole('heading', { name: 'Vehicles screen' })).toBeVisible();
+      expect(screen.getByRole('heading', { name: 'Dashboard screen' })).toBeVisible();
     },
   );
 

@@ -4,16 +4,6 @@
   padding-block: var(--space-6);
 }
 
-.create-booking-page__title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-}
-
-.create-booking-page__subtitle {
-  margin: calc(-1 * var(--space-4)) 0 0;
-  color: var(--color-text-muted);
-}
-
 .create-booking-page__vehicle-details {
   display: grid;
   gap: var(--space-3);

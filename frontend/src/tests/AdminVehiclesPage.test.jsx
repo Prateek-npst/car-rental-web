@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { LIMITS } from '@/constants/limits.js';
 import { MESSAGES } from '@/constants/messages.js';
 import AdminVehiclesPage from '@/pages/AdminVehiclesPage.jsx';
@@ -26,7 +27,11 @@ const vehicle = {
 };
 
 function renderPage() {
-  return render(<AdminVehiclesPage />);
+  return render(
+    <MemoryRouter>
+      <AdminVehiclesPage />
+    </MemoryRouter>,
+  );
 }
 
 function fillVehicleForm(values = vehicle) {

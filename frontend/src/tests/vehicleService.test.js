@@ -3,6 +3,7 @@ import { MESSAGES } from '@/constants/messages.js';
 import {
   createVehicle,
   deleteVehicle,
+  getVehicleById,
   getVehicles,
   searchAvailableVehicles,
   updateVehicle,
@@ -72,6 +73,15 @@ describe('vehicleService', () => {
     await expect(getVehicles()).resolves.toBe(vehicles);
 
     expect(apiClient.get).toHaveBeenCalledWith(API_CONFIG.VEHICLES.BASE);
+  });
+
+  it('loads one vehicle through its authenticated ID endpoint', async () => {
+    const vehicle = { id: 42, model: 'Backend Sedan' };
+    apiClient.get.mockResolvedValue({ data: vehicle });
+
+    await expect(getVehicleById(42)).resolves.toBe(vehicle);
+
+    expect(apiClient.get).toHaveBeenCalledWith('/vehicles/42');
   });
 
   it('creates a vehicle with the submitted fields', async () => {

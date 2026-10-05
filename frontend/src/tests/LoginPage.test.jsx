@@ -18,6 +18,7 @@ function renderLoginPage(initialEntry = ROUTES.LOGIN) {
     <MemoryRouter initialEntries={[initialEntry]}>
       <Routes>
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+        <Route path={ROUTES.DASHBOARD} element={<h1>Dashboard destination</h1>} />
         <Route path={ROUTES.VEHICLES} element={<h1>Vehicles destination</h1>} />
         <Route path={ROUTES.BOOKINGS} element={<h1>Bookings destination</h1>} />
       </Routes>
@@ -83,7 +84,7 @@ describe('LoginPage', () => {
     expect(mockLogin).not.toHaveBeenCalled();
   });
 
-  it('submits credentials and navigates to the vehicles route on success', async () => {
+  it('submits credentials and navigates to the dashboard on success', async () => {
     mockLogin.mockResolvedValue(undefined);
     renderLoginPage();
     fillLoginForm('renter@example.com', 'Correct-horse-battery1!');
@@ -91,7 +92,7 @@ describe('LoginPage', () => {
     fireEvent.click(screen.getByRole('button', { name: MESSAGES.AUTH.LOGIN }));
 
     expect(
-      await screen.findByRole('heading', { name: 'Vehicles destination' }),
+      await screen.findByRole('heading', { name: 'Dashboard destination' }),
     ).toBeInTheDocument();
     expect(mockLogin).toHaveBeenCalledWith({
       email: 'renter@example.com',
@@ -169,7 +170,7 @@ describe('LoginPage', () => {
 
     resolveLogin();
     expect(
-      await screen.findByRole('heading', { name: 'Vehicles destination' }),
+      await screen.findByRole('heading', { name: 'Dashboard destination' }),
     ).toBeInTheDocument();
     expect(
       screen.queryByRole('button', { name: MESSAGES.COMMON.LOADING }),

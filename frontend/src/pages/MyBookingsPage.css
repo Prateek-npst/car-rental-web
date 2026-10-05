@@ -4,21 +4,6 @@
   padding-block: var(--space-8);
 }
 
-.my-bookings-page__heading {
-  display: grid;
-  gap: var(--space-2);
-}
-
-.my-bookings-page__title {
-  margin: 0;
-  font-size: var(--font-size-2xl);
-}
-
-.my-bookings-page__heading p {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
 .my-bookings-page__list {
   display: grid;
   gap: var(--space-4);

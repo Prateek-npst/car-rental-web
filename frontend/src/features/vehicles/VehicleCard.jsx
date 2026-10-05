@@ -1,6 +1,8 @@
 import PropTypes from 'prop-types';
+import { Link } from 'react-router-dom';
 import Button from '@/components/ui/Button.jsx';
 import { MESSAGES } from '@/constants/messages.js';
+import { getVehicleDetailsRoute } from '@/constants/routes.js';
 import VehicleImage from '@/features/vehicles/VehicleImage.jsx';
 import './VehicleCard.css';
 
@@ -37,6 +39,12 @@ function VehicleCard({
           </dl>
           {isManaging ? (
             <div className="vehicle-card__actions">
+              <Link
+                className="vehicle-card__details-link"
+                to={getVehicleDetailsRoute(vehicle.id)}
+              >
+                {MESSAGES.VEHICLES.VIEW_DETAILS}
+              </Link>
               <Button
                 className="vehicle-card__action"
                 onClick={() => onEdit(vehicle)}
@@ -57,13 +65,21 @@ function VehicleCard({
               </Button>
             </div>
           ) : (
-            <Button
-              className="vehicle-card__action"
-              type="button"
-              onClick={() => onSelect(vehicle)}
-            >
-              {MESSAGES.VEHICLES.SELECT_VEHICLE}
-            </Button>
+            <div className="vehicle-card__actions">
+              <Link
+                className="vehicle-card__details-link"
+                to={getVehicleDetailsRoute(vehicle.id)}
+              >
+                {MESSAGES.VEHICLES.VIEW_DETAILS}
+              </Link>
+              <Button
+                className="vehicle-card__action"
+                type="button"
+                onClick={() => onSelect(vehicle)}
+              >
+                {MESSAGES.VEHICLES.CONTINUE_TO_BOOKING}
+              </Button>
+            </div>
           )}
         </div>
       </article>

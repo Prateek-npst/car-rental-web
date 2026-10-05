@@ -1,29 +1,15 @@
 import { API_CONFIG, apiClient } from '@/config/api.js';
 import { MESSAGES } from '@/constants/messages.js';
-
-function getBookingErrorMessage(status, fallbackMessage) {
-  if (status === 400) {
-    return MESSAGES.BOOKING.CREATE_VALIDATION_FAILED;
-  }
-
-  if (status === 404) {
-    return MESSAGES.BOOKING.NOT_FOUND;
-  }
-
-  if (status === 409) {
-    return MESSAGES.BOOKING.BOOKING_CONFLICT;
-  }
-
-  if (status === 403) {
-    return MESSAGES.BOOKING.PERMISSION_DENIED;
-  }
-
-  return fallbackMessage;
-}
+import { resolveApiError } from '@/utils/apiError.js';
 
 function throwBookingError(error, fallbackMessage) {
   throw new Error(
-    getBookingErrorMessage(error?.response?.status, fallbackMessage),
+    resolveApiError(error, fallbackMessage, {
+      400: MESSAGES.BOOKING.CREATE_VALIDATION_FAILED,
+      403: MESSAGES.BOOKING.PERMISSION_DENIED,
+      404: MESSAGES.BOOKING.NOT_FOUND,
+      409: MESSAGES.BOOKING.BOOKING_CONFLICT,
+    }),
     { cause: error },
   );
 }

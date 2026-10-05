@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useParams } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MESSAGES } from '@/constants/messages.js';
 import { LIMITS } from '@/constants/limits.js';
@@ -26,10 +26,16 @@ function renderVehiclesPage() {
     <MemoryRouter initialEntries={[ROUTES.VEHICLES]}>
       <Routes>
         <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
+        <Route path={ROUTES.VEHICLE_DETAILS} element={<VehicleDetailsDestination />} />
         <Route path={ROUTES.CREATE_BOOKING} element={<CreateBookingPage />} />
       </Routes>
     </MemoryRouter>,
   );
+}
+
+function VehicleDetailsDestination() {
+  const { id } = useParams();
+  return <h1>Vehicle details {id}</h1>;
 }
 
 function fillSearchForm({ location, pickupDate, dropoffDate }) {
@@ -311,8 +317,8 @@ describe('VehiclesPage', () => {
       name: 'Backend Sedan',
     });
     fireEvent.click(
-      within(vehicleTitle.closest('article')).getByRole('button', {
-        name: MESSAGES.VEHICLES.SELECT_VEHICLE,
+        within(vehicleTitle.closest('article')).getByRole('button', {
+          name: MESSAGES.VEHICLES.CONTINUE_TO_BOOKING,
       }),
     );
 
@@ -323,5 +329,27 @@ describe('VehiclesPage', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Backend Sedan')).toBeInTheDocument();
     expect(screen.getByText('API-042')).toBeInTheDocument();
+  });
+
+  it('opens vehicle details without changing the existing booking action', async () => {
+    searchAvailableVehicles.mockResolvedValue([backendVehicle]);
+    renderVehiclesPage();
+    fillSearchForm({
+      location: 'Central City',
+      pickupDate: '2026-10-16',
+      dropoffDate: '2026-10-17',
+    });
+    fireEvent.click(screen.getByRole('button', { name: MESSAGES.VEHICLES.SEARCH }));
+
+    const vehicleTitle = await screen.findByRole('heading', {
+      name: backendVehicle.model,
+    });
+    const card = vehicleTitle.closest('article');
+    expect(
+      within(card).getByRole('link', { name: MESSAGES.VEHICLES.VIEW_DETAILS }),
+    ).toHaveAttribute('href', '/vehicles/42');
+    fireEvent.click(within(card).getByRole('link', { name: MESSAGES.VEHICLES.VIEW_DETAILS }));
+
+    expect(await screen.findByRole('heading', { name: 'Vehicle details 42' })).toBeVisible();
   });
 });

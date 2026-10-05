@@ -1,14 +1,14 @@
 package com.carrental.backend.controller;
 
 import java.time.LocalDate;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -18,13 +18,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.carrental.backend.constants.ApiPaths;
 import com.carrental.backend.dto.VehicleDtos.VehicleRequest;
 import com.carrental.backend.entity.Vehicle;
 import com.carrental.backend.repository.BookingRepository;
 import com.carrental.backend.repository.VehicleRepository;
 
 @RestController
-@RequestMapping("/vehicles")
+@RequestMapping(ApiPaths.VEHICLES_BASE)
 public class VehicleController {
 	private final VehicleRepository vehicleRepository;
 	private final BookingRepository bookingRepository;
@@ -37,6 +38,12 @@ public class VehicleController {
 	@GetMapping
 	public List<Vehicle> getAllVehicles() {
 		return vehicleRepository.findAll();
+	}
+
+	@GetMapping("/{id}")
+	public Vehicle getVehicleById(@PathVariable Long id) {
+		return vehicleRepository.findById(id)
+				.orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vehicle not found."));
 	}
 
 	@PostMapping
@@ -76,7 +83,7 @@ public class VehicleController {
 		return ResponseEntity.noContent().build();
 	}
 
-	@GetMapping("/search")
+	@GetMapping(ApiPaths.VEHICLE_SEARCH)
 	public ResponseEntity<List<Vehicle>> searchVehicles(
 			@RequestParam String location,
 			@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate pickupDate,

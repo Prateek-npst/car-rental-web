@@ -60,7 +60,7 @@ function LoginForm() {
   async function submitLogin(credentials) {
     try {
       await login(credentials);
-      navigate(location.state?.from || ROUTES.VEHICLES, { replace: true });
+      navigate(location.state?.from || ROUTES.DASHBOARD, { replace: true });
     } catch (error) {
       const nextError =
         error?.message === MESSAGES.AUTH.NETWORK_LOGIN_ERROR

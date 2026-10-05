@@ -1,25 +1,44 @@
 import axios from 'axios';
-import { getAuthToken, removeAuthToken } from '@/utils/tokenStorage.js';
+import { API_CONFIG } from '@/constants/api.js';
+import { getAuthToken, removeAuthToken, setAuthToken } from '@/utils/tokenStorage.js';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api';
+export { API_CONFIG };
 
-export const API_CONFIG = Object.freeze({
-  BASE_URL: API_BASE_URL,
-  AUTH: Object.freeze({
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-  }),
-  VEHICLES: Object.freeze({
-    BASE: '/vehicles',
-    SEARCH: '/vehicles/search',
-  }),
-  BOOKINGS: Object.freeze({
-    BASE: '/bookings',
-  }),
+const REFRESH_RETRY_KEY = '__authRefreshAttempted';
+const baseURL = API_CONFIG.BASE_URL.replace(/\/+$/, '');
+const authSessionClient = axios.create({
+  baseURL,
+  withCredentials: true,
+  headers: { 'Content-Type': 'application/json' },
 });
+let refreshPromise = null;
+
+export function refreshAuthSession() {
+  if (!refreshPromise) {
+    refreshPromise = authSessionClient
+      .post(API_CONFIG.AUTH.REFRESH, null, {
+        headers: { 'X-Auth-Action': 'refresh' },
+      })
+      .then((response) => response.data)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+
+  return refreshPromise;
+}
+
+export function logoutAuthSession() {
+  return authSessionClient
+    .post(API_CONFIG.AUTH.LOGOUT, null, {
+      headers: { 'X-Auth-Action': 'logout' },
+    })
+    .catch(() => undefined);
+}
 
 export const apiClient = axios.create({
-  baseURL: API_CONFIG.BASE_URL.replace(/\/+$/, ''),
+  baseURL,
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -38,8 +57,37 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
-    if (error?.response?.status === 401) {
+  async (error) => {
+    const originalRequest = error?.config;
+    const requestPath = originalRequest?.url;
+    const isAuthRequest = Object.values(API_CONFIG.AUTH).includes(requestPath);
+
+    if (
+      error?.response?.status === 401 &&
+      originalRequest &&
+      !originalRequest[REFRESH_RETRY_KEY] &&
+      !isAuthRequest
+    ) {
+      try {
+        originalRequest[REFRESH_RETRY_KEY] = true;
+        const session = await refreshAuthSession();
+        const nextToken = session?.token ?? null;
+
+        if (nextToken) {
+          setAuthToken(nextToken);
+          window.dispatchEvent(
+            new CustomEvent('auth:token-refreshed', { detail: session }),
+          );
+          originalRequest.headers = {
+            ...originalRequest.headers,
+            Authorization: `Bearer ${nextToken}`,
+          };
+          return apiClient(originalRequest);
+        }
+      } catch {
+        // Expire the local session when the refresh cookie is no longer valid.
+      }
+
       removeAuthToken();
       window.dispatchEvent(new Event('auth:token-expired'));
     }

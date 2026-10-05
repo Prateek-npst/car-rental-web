@@ -1,10 +1,14 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import AppLayout from '@/components/layout/AppLayout.jsx';
+import DashboardLayout from '@/components/layout/DashboardLayout.jsx';
 import AdminVehiclesPage from '@/pages/AdminVehiclesPage.jsx';
 import CreateBookingPage from '@/pages/CreateBookingPage.jsx';
+import DashboardPage from '@/pages/DashboardPage.jsx';
 import MyBookingsPage from '@/pages/MyBookingsPage.jsx';
+import ProfilePage from '@/pages/ProfilePage.jsx';
 import LoginPage from '@/pages/LoginPage.jsx';
 import RegistrationPage from '@/pages/RegistrationPage.jsx';
+import VehicleDetailsPage from '@/pages/VehicleDetailsPage.jsx';
 import VehiclesPage from '@/pages/VehiclesPage.jsx';
 import { ROUTES } from '@/constants/routes.js';
 import { ROLES } from '@/constants/roles.js';
@@ -20,9 +24,21 @@ function App() {
             <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             <Route path={ROUTES.REGISTER} element={<RegistrationPage />} />
           </Route>
+        </Route>
 
-          <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute />}>
+          <Route element={<DashboardLayout />}>
+            <Route
+              path="/"
+              element={<Navigate to={ROUTES.DASHBOARD} replace />}
+            />
+            <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
             <Route path={ROUTES.VEHICLES} element={<VehiclesPage />} />
+            <Route
+              path={ROUTES.VEHICLE_DETAILS}
+              element={<VehicleDetailsPage />}
+            />
+            <Route path={ROUTES.PROFILE} element={<ProfilePage />} />
 
             <Route
               path={ROUTES.BOOKINGS}
@@ -51,9 +67,9 @@ function App() {
               }
             />
           </Route>
-
-          <Route path="*" element={<Navigate to={ROUTES.VEHICLES} replace />} />
         </Route>
+
+        <Route path="*" element={<Navigate to={ROUTES.VEHICLES} replace />} />
       </Routes>
     </BrowserRouter>
   );

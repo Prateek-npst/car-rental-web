@@ -9,6 +9,8 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
 
+import com.carrental.backend.constants.SecurityConstants;
+
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -27,15 +29,15 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 	@Override
 	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
-		String authorization = request.getHeader("Authorization");
-		if (authorization == null || !authorization.startsWith("Bearer ")) {
+		String authorization = request.getHeader(SecurityConstants.AUTHORIZATION_HEADER);
+		if (authorization == null || !authorization.startsWith(SecurityConstants.BEARER_PREFIX)) {
 			filterChain.doFilter(request, response);
 			return;
 		}
 
 		AuthenticatedUser user;
 		try {
-			user = jwtService.parseToken(authorization.substring(7).trim());
+			user = jwtService.parseToken(authorization.substring(SecurityConstants.BEARER_PREFIX.length()).trim());
 		} catch (JwtException | IllegalArgumentException exception) {
 			SecurityContextHolder.clearContext();
 			securityErrorHandler.commence(request, response, new BadCredentialsException("Invalid bearer token."));
@@ -45,7 +47,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 		var authentication = new UsernamePasswordAuthenticationToken(
 				user,
 				null,
-				List.of(new SimpleGrantedAuthority("ROLE_" + user.role().name())));
+				List.of(new SimpleGrantedAuthority(SecurityConstants.ROLE_PREFIX + user.role().name())));
 		SecurityContextHolder.getContext().setAuthentication(authentication);
 		filterChain.doFilter(request, response);
 	}

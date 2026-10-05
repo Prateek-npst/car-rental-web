@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button.jsx';
 import Card from '@/components/ui/Card.jsx';
+import PageHeading from '@/components/ui/PageHeading.jsx';
 import { MESSAGES } from '@/constants/messages.js';
-import { ROLES } from '@/constants/roles.js';
+import { canManageBooking, isAdmin } from '@/constants/permissions.js';
 import { useAuth } from '@/context/AuthContext.jsx';
 import BookingForm from '@/features/bookings/BookingForm.jsx';
 import {
@@ -14,7 +15,7 @@ import './MyBookingsPage.css';
 
 function MyBookingsPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === ROLES.ADMIN;
+  const admin = isAdmin(user);
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
@@ -108,18 +109,25 @@ function MyBookingsPage() {
 
   return (
     <div className="my-bookings-page">
-      <header className="my-bookings-page__heading">
-        <h1 className="my-bookings-page__title">
-          {isAdmin
-            ? MESSAGES.BOOKING.ALL_BOOKINGS_TITLE
-            : MESSAGES.BOOKING.MY_BOOKINGS_TITLE}
-        </h1>
-        <p>
-          {isAdmin
+      <PageHeading
+        breadcrumbs={[
+          {
+            label: admin
+              ? MESSAGES.BOOKING.ALL_BOOKINGS_TITLE
+              : MESSAGES.BOOKING.MY_BOOKINGS_TITLE,
+          },
+        ]}
+        description={
+          admin
             ? MESSAGES.BOOKING.ALL_BOOKINGS_DESCRIPTION
-            : MESSAGES.BOOKING.MY_BOOKINGS_DESCRIPTION}
-        </p>
-      </header>
+            : MESSAGES.BOOKING.MY_BOOKINGS_DESCRIPTION
+        }
+        title={
+          admin
+            ? MESSAGES.BOOKING.ALL_BOOKINGS_TITLE
+            : MESSAGES.BOOKING.MY_BOOKINGS_TITLE
+        }
+      />
 
       {actionError && <p role="alert">{actionError}</p>}
       {actionMessage && <p role="status">{actionMessage}</p>}
@@ -162,38 +170,39 @@ function MyBookingsPage() {
                   </div>
                 </dl>
 
-                {editingBookingId === booking.id ? (
-                  <BookingForm
-                    key={booking.id}
-                    initialDates={{
-                      startDate: booking.startDate,
-                      endDate: booking.endDate,
-                    }}
-                    isLoading={savingBookingId === booking.id}
-                    onCancel={() => setEditingBookingId(null)}
-                    onSubmit={(dates) => handleUpdate(booking, dates)}
-                    submitLabel={MESSAGES.BOOKING.UPDATE}
-                  />
-                ) : (
-                  <div className="my-bookings-page__actions">
-                    <Button
-                      disabled={isMutating}
-                      onClick={() => setEditingBookingId(booking.id)}
-                      type="button"
-                      variant="secondary"
-                    >
-                      {MESSAGES.BOOKING.EDIT}
-                    </Button>
-                    <Button
-                      disabled={isMutating}
-                      isLoading={deletingBookingId === booking.id}
-                      onClick={() => handleDelete(booking)}
-                      type="button"
-                    >
-                      {MESSAGES.BOOKING.CANCEL_BOOKING}
-                    </Button>
-                  </div>
-                )}
+                {canManageBooking(user, booking) &&
+                  (editingBookingId === booking.id ? (
+                    <BookingForm
+                      key={booking.id}
+                      initialDates={{
+                        startDate: booking.startDate,
+                        endDate: booking.endDate,
+                      }}
+                      isLoading={savingBookingId === booking.id}
+                      onCancel={() => setEditingBookingId(null)}
+                      onSubmit={(dates) => handleUpdate(booking, dates)}
+                      submitLabel={MESSAGES.BOOKING.UPDATE}
+                    />
+                  ) : (
+                    <div className="my-bookings-page__actions">
+                      <Button
+                        disabled={isMutating}
+                        onClick={() => setEditingBookingId(booking.id)}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {MESSAGES.BOOKING.EDIT}
+                      </Button>
+                      <Button
+                        disabled={isMutating}
+                        isLoading={deletingBookingId === booking.id}
+                        onClick={() => handleDelete(booking)}
+                        type="button"
+                      >
+                        {MESSAGES.BOOKING.CANCEL_BOOKING}
+                      </Button>
+                    </div>
+                  ))}
               </Card>
             </li>
           ))}

@@ -1,0 +1,45 @@
+.dashboard-layout {
+  position: relative;
+  display: grid;
+  min-height: 100vh;
+  grid-template-columns: 15rem minmax(0, 1fr);
+  background: var(--color-background);
+}
+
+.dashboard-layout__backdrop {
+  display: none;
+}
+
+.dashboard-layout__workspace {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.dashboard-layout__main {
+  width: 100%;
+  max-width: 1280px;
+  flex: 1;
+  margin: 0 auto;
+  padding: var(--space-6) clamp(var(--space-4), 4vw, var(--space-8));
+}
+
+@media (max-width: 48rem) {
+  .dashboard-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dashboard-layout__main {
+    padding-block: var(--space-4);
+  }
+
+  .dashboard-layout__backdrop {
+    position: fixed;
+    inset: 4.25rem 0 0;
+    z-index: 20;
+    display: block;
+    width: 100%;
+    border: 0;
+    background: rgb(17 30 27 / 38%);
+  }
+}

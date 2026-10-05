@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Card from '@/components/ui/Card.jsx';
+import PageHeading from '@/components/ui/PageHeading.jsx';
 import { MESSAGES } from '@/constants/messages.js';
 import { ROUTES } from '@/constants/routes.js';
 import VehicleCard from '@/features/vehicles/VehicleCard.jsx';
@@ -37,11 +38,11 @@ function VehiclesPage() {
 
   return (
     <div className="vehicles-page">
-      <header className="vehicles-page__heading">
-        <p className="vehicles-page__eyebrow">DRIVE YOUR WAY</p>
-        <h1 className="vehicles-page__title">{MESSAGES.VEHICLES.TITLE}</h1>
-        <p className="vehicles-page__subtitle">{MESSAGES.VEHICLES.SUBTITLE}</p>
-      </header>
+      <PageHeading
+        breadcrumbs={[{ label: MESSAGES.NAVIGATION.VEHICLES }]}
+        description={MESSAGES.VEHICLES.SUBTITLE}
+        title={MESSAGES.NAVIGATION.VEHICLES}
+      />
       <Card title={MESSAGES.VEHICLES.SEARCH_FORM_TITLE}>
         <VehicleSearchForm onSearch={handleSearch} />
       </Card>
